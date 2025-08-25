@@ -1,0 +1,173 @@
+Settings:
+  #The title of GUI:
+  Title: "           &0Kho Chứa Của Bạn"
+  #Rows on GUI:
+  # * The value can only be from 1 to 6.
+  Rows: 6
+
+  #Default sort type:
+  # * Available: MATERIAL, NAME, QUANTITY and UNFILTERED.
+  DefaultSort: MATERIAL
+
+  #Plays a sound when the player interacts on GUI:
+  #Empty the string (like below) will disable this feature.
+  #Sound: ''
+  Sound: "ui_button_click"
+
+#This icon represents items that are in the storage.
+RepresentItem:
+  #Empty the string (like below) will use the configured items name.
+  Name: ""
+  #Lore: []
+  Lore:
+    - ""
+    - "&7+ Trạng thái: &r{status}"
+    - ""
+    - "&7+ Số lượng: &e{quantity}"
+    - ""
+    - "&8[&6Chuột Trái&8] &7Rút một vật phẩm."
+    - "&8[&6Chuột Phải&8] &7Rút một stack."
+    - "&8[&6Shift Trái&8] &7Rút tất cả."
+    - "&8[&6Shift Phải&8] &7Thêm tất cả vào kho."
+  #List of positions for this icon:
+  Slots: [11-17, 20-26, 29-35]
+
+# * Please do not delete any items in this section.
+# * If you don't want to display these items on GUI, just set their slot to -1.
+ControlItems:
+  #This item is used to display the user's storage information:
+  About:
+    #For those who prefer to use custom models from ItemsAdder (or Oraxen),
+    #use this option to specify a model.
+    #Format: 'Oraxen:<id>' or 'IA:<namespaceId>'
+    # * If this option is used, it means that: Material and Data cannot be used.
+    # * Remember to remove the 'CustomModelData' option first.
+    # * Leave it blank will disable this feature.
+    Model: "" #May not need to configure.
+    Material: "PAPER"
+    Amount: 1 #May not need to configure.
+    Data: 0 #May not need to configure.
+    #Using 'Texture' option if you want to display the head texture (requires Material is PLAYER_HEAD):
+    #Texture: '<value>' #Can be found at: https://minecraft-heads.com/ (Value field).
+    #Texture: 'hdb-<id>' #Using for HeadDatabase plugin.
+    Texture: "%player%"
+    CustomModelData: 0 #Can only be used on the server version 1.14+. May not need to configure.
+    Name: "#dcdde1Thông Tin Kho Chứa" #May not need to configure.
+    Lore: #May not need to configure.
+      - ""
+      - "&7+ Chủ sở hữu: &b{player}"
+      - ""
+      - "&7+ Trạng thái: &r{status}"
+      - ""
+      - "&7+ Dung lượng: &e{space}"
+      - ""
+      - "&7+ Đã sử dụng: &f{used_space} &7/ &c{used_percent}"
+      - ""
+      - "&7+ Còn trống: &f{free_space} &7/ &c{free_percent}"
+      - ""
+      - "&8[&6Nhấp&8] #dcdde1Thay đổi trạng thái kho."
+    Slot: 50
+  #Back to previous page:
+  PreviousPage:
+    Material: "ARROW"
+    Name: "&8[&6Nhấp&8] #dcdde1Trang Trước"
+    Lore:
+      - "&7Trang hiện tại: &f{page}&7/&c{max_pages}"
+    Slot: 48
+  #Go to next page:
+  NextPage:
+    Material: "ARROW"
+    Name: "&8[&6Nhấp&8] #dcdde1Trang Sau"
+    Lore:
+      - "&7Trang hiện tại: &f{page}&7/&c{max_pages}"
+    Slot: 52
+
+  #Switching button between GUIs:
+  SwitchGui:
+    Material: "CHEST_MINECART"
+    Name: "#dcdde1Chuyển Đổi Kho Chứa"
+    Lore:
+      - ""
+      - "&8 ● &7Đối Tác"
+      - "&8 ● &7Bộ Lọc"
+      - "&2→ &aKho Chứa"
+      - "&8 ● &7Bán Hàng"
+      - ""
+      - "&8[&6Chuột Trái&8] #dcdde1Kho tiếp theo"
+      - "&8[&6Chuột Phải&8] #dcdde1Kho trước đó"
+    Slot: 49
+
+  #Sorting items by material:
+  SortByMaterial:
+    Material: "BOOK"
+    Name: "#dcdde1Sắp Xếp Kho Chứa"
+    Lore:
+      - ""
+      - "&2→ &aTheo vật liệu"
+      - "&8 ● &7Theo tên"
+      - "&8 ● &7Theo số lượng"
+      - "&8 ● &7Theo chưa lọc"
+      - ""
+      - "&8[&6Chuột Trái&8] #dcdde1Bộ lọc tiếp"
+      - "&8[&6Chuột Phải&8] #dcdde1Bộ lọc trước"
+      - "&8[&6Shift&8] #dcdde1Đảo ngược"
+    Slot: 51
+  #Sorting items by name:
+  SortByName:
+    Material: "BOOK"
+    Name: "#dcdde1Sắp Xếp Kho Chứa"
+    Lore:
+      - ""
+      - "&8 ● &7Theo vật liệu"
+      - "&2→ &aTheo tên"
+      - "&8 ● &7Theo số lượng"
+      - "&8 ● &7Theo chưa lọc"
+      - ""
+      - "&8[&6Chuột Trái&8] #dcdde1Bộ lọc tiếp"
+      - "&8[&6Chuột Phải&8] #dcdde1Bộ lọc trước"
+      - "&8[&6Shift&8] #dcdde1Đảo ngược"
+    Slot: 51
+  #Sorting items by quantity:
+  SortByQuantity:
+    Material: "BOOK"
+    Name: "#dcdde1Sắp Xếp Kho Chứa"
+    Lore:
+      - ""
+      - "&8 ● &7Theo vật liệu"
+      - "&8 ● &7Theo tên"
+      - "&2→ &aTheo số lượng"
+      - "&8 ● &7Theo chưa lọc"
+      - ""
+      - "&8[&6Chuột Trái&8] #dcdde1Bộ lọc tiếp"
+      - "&8[&6Chuột Phải&8] #dcdde1Bộ lọc trước"
+      - "&8[&6Shift&8] #dcdde1Đảo ngược"
+    Slot: 51
+  #Sorting unfiltered items first:
+  SortByUnfilter:
+    Material: "BOOK"
+    Name: "#dcdde1Sắp Xếp Kho Chứa"
+    Lore:
+      - ""
+      - "&8 ● &7Theo vật liệu"
+      - "&8 ● &7Theo tên"
+      - "&8 ● &7Theo số lượng"
+      - "&2→ &aTheo chưa lọc"
+      - ""
+      - "&8[&6Chuột Trái&8] #dcdde1Bộ lọc tiếp"
+      - "&8[&6Chuột Phải&8] #dcdde1Bộ lọc trước"
+    Slot: 51
+
+    # Removed AddNewItem button, only keep sort button at slot 51
+
+#These are decorative items, which will make your GUI more beautiful!
+#You can add/delete items in this section.
+# * You can only add "commands" in this section.
+DecorateItems:
+  border:
+    Material: "BLACK_STAINED_GLASS_PANE"
+    Name: " "
+    Slots: [0-10, 18, 19, 27, 28, 36, 37, 45, 46-48, 53-54]
+  divider:
+    Material: "GRAY_STAINED_GLASS_PANE"
+    Name: " "
+    Slots: [38-44]

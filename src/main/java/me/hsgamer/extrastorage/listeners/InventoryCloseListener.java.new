@@ -1,0 +1,44 @@
+package me.hsgamer.extrastorage.listeners;
+
+import me.hsgamer.extrastorage.ExtraStorage;
+import me.hsgamer.extrastorage.gui.AddItemToStorageGui;
+import me.hsgamer.extrastorage.util.ItemUtil;
+import org.bukkit.Material;
+import org.bukkit.entity.Player;
+import org.bukkit.event.EventHandler;
+import org.bukkit.event.EventPriority;
+import org.bukkit.event.Listener;
+import org.bukkit.event.inventory.InventoryCloseEvent;
+import org.bukkit.inventory.ItemStack;
+
+/**
+ * Listener để xử lý sự kiện đóng inventory
+ * Được sử dụng để trả lại vật phẩm cho người chơi khi đóng GUI
+ */
+public class InventoryCloseListener implements Listener {
+
+    public InventoryCloseListener(ExtraStorage instance) {
+        // Constructor - không cần lưu instance vì không sử dụng
+    }
+
+    @EventHandler(priority = EventPriority.MONITOR)
+    public void onInventoryClose(InventoryCloseEvent event) {
+        if (!(event.getPlayer() instanceof Player))
+            return;
+        Player player = (Player) event.getPlayer();
+
+        // Kiểm tra xem có phải GUI thêm item không
+        if (event.getInventory().getHolder() instanceof AddItemToStorageGui) {
+            // Lấy item từ slot 14 (đã thay đổi từ slot 13)
+            ItemStack itemInSlot = event.getInventory().getItem(14);
+            if (itemInSlot != null && itemInSlot.getType() != Material.AIR) {
+                // Kiểm tra để đảm bảo đây không phải kính đen từ GUI
+                if (itemInSlot.getType() != Material.BLACK_STAINED_GLASS_PANE) {
+                    // Trả lại item cho người chơi
+                    ItemUtil.giveItem(player, itemInSlot);
+                    player.sendMessage("§e[ExtraStorage] §7Vật phẩm đã được trả lại vào túi đồ của bạn.");
+                }
+            }
+        }
+    }
+}

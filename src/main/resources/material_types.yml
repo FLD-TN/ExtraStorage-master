@@ -1,0 +1,125 @@
+# Cấu hình loại vật phẩm có thể thêm vào kho
+# Mỗi loại vật phẩm đều có thể tùy chỉnh
+
+# Danh sách vật phẩm bị cấm, không thể thêm vào kho trong mọi trường hợp
+blacklisted-materials:
+  - WOODEN_PICKAXE
+  - STONE_PICKAXE
+  - IRON_PICKAXE
+  - GOLDEN_PICKAXE
+  - DIAMOND_PICKAXE
+  - NETHERITE_PICKAXE
+  - WOODEN_AXE
+  - STONE_AXE
+  - IRON_AXE
+  - GOLDEN_AXE
+  - DIAMOND_AXE
+  - NETHERITE_AXE
+  - WOODEN_SHOVEL
+  - STONE_SHOVEL
+  - IRON_SHOVEL
+  - GOLDEN_SHOVEL
+  - DIAMOND_SHOVEL
+  - NETHERITE_SHOVEL
+  - WOODEN_HOE
+  - STONE_HOE
+  - IRON_HOE
+  - GOLDEN_HOE
+  - DIAMOND_HOE
+  - NETHERITE_HOE
+  - WOODEN_SWORD
+  - STONE_SWORD
+  - IRON_SWORD
+  - GOLDEN_SWORD
+  - DIAMOND_SWORD
+  - NETHERITE_SWORD
+  - BOW
+  - CROSSBOW
+  - TRIDENT
+  - SHIELD
+  - LEATHER_HELMET
+  - CHAINMAIL_HELMET
+  - IRON_HELMET
+  - GOLDEN_HELMET
+  - DIAMOND_HELMET
+  - NETHERITE_HELMET
+  - LEATHER_CHESTPLATE
+  - CHAINMAIL_CHESTPLATE
+  - IRON_CHESTPLATE
+  - GOLDEN_CHESTPLATE
+  - DIAMOND_CHESTPLATE
+  - NETHERITE_CHESTPLATE
+  - LEATHER_LEGGINGS
+  - CHAINMAIL_LEGGINGS
+  - IRON_LEGGINGS
+  - GOLDEN_LEGGINGS
+  - DIAMOND_LEGGINGS
+  - NETHERITE_LEGGINGS
+  - LEATHER_BOOTS
+  - CHAINMAIL_BOOTS
+  - IRON_BOOTS
+  - GOLDEN_BOOTS
+  - DIAMOND_BOOTS
+  - NETHERITE_BOOTS
+  - ELYTRA
+  - ENCHANTED_BOOK
+
+# Các chữ cần chứa trong tên vật liệu để xác định loại quặng hoặc khoáng sản
+ore-materials:
+  - ORE
+  - INGOT
+  - GEM
+  - NUGGET
+  - BLOCK
+  - COAL
+  - DIAMOND
+  - EMERALD
+  - LAPIS
+  - REDSTONE
+  - QUARTZ
+  - NETHERITE
+  - COBBLESTONE
+  - STONE
+  - AMETHYST
+  - RAW  # Thêm vào để hỗ trợ các loại quặng thô (raw)
+  - COPPER
+  - IRON
+  - GOLD
+
+# Các chữ cần chứa trong tên vật liệu để xác định loại nông sản
+crop-materials:
+  - SEEDS
+  - WHEAT
+  - CARROT
+  - POTATO
+  - BEETROOT
+  - MELON
+  - PUMPKIN
+  - SUGAR_CANE
+  - CACTUS
+  - BAMBOO
+  - COCOA
+  - NETHER_WART
+  - APPLE
+  - BERRIES
+  - CHORUS
+  - SUGAR
+
+# Các chữ cần chứa trong tên vật liệu để xác định vật phẩm rơi từ mob
+mobdrop-materials:
+  - BONE
+  - ROTTEN_FLESH
+  - SPIDER_EYE
+  - STRING
+  - GUNPOWDER
+  - ENDER_PEARL
+  - BLAZE_ROD
+  - GHAST_TEAR
+  - SLIME
+  - LEATHER
+  - FEATHER
+  - EGG
+  - WOOL
+  - INK_SAC
+  - PHANTOM_MEMBRANE
+  - SHULKER_SHELL

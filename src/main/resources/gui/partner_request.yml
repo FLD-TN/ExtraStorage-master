@@ -1,0 +1,25 @@
+Settings:
+  Title: '         &0ᴘᴀʀᴛɴᴇʀ ʀᴇǫᴜᴇsᴛs'
+  Rows: 3
+  Sound: 'ui_button_click'
+
+RequestItem:
+  Material: 'PLAYER_HEAD'
+  Amount: 1
+  Data: 0
+  CustomModelData: 0
+  Texture: '%partner%'
+  Name: '&fRequest from: &6{partner}'
+  Lore:
+    - ''
+    - '&7+ Timestamp: &f{time}'
+    - ''
+    - '&8[&aʟ.ᴄʟɪᴄᴋ&8] &7Accept request'
+    - '&8[&cʀ.ᴄʟɪᴄᴋ&8] &7Deny request'
+  Slots: [10-16]
+
+DecorateItems:
+  border:
+    Material: 'BLACK_STAINED_GLASS_PANE'
+    Name: ' '
+    Slots: [0-9, 17-26]

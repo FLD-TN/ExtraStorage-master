@@ -1,0 +1,61 @@
+    @Override
+    public void unfilter(Object key) {
+        if (key == null) return;
+        
+        String validKey = ItemUtil.toMaterialKey(key);
+        if (validKey == null || validKey.isEmpty() || validKey.equals(Constants.INVALID)) {
+            return;
+        }
+        
+        // Mở rộng phạm vi tìm kiếm để giải quyết vấn đề định dạng không nhất quán
+        String normalizedKey = normalizeKey(validKey);
+        String bareKey = validKey.split(":", 2)[0].toUpperCase(Locale.ROOT);
+        
+        Debug.log("[UNFILTER] validKey: " + validKey);
+        Debug.log("[UNFILTER] normalizedKey: " + normalizedKey);
+        Debug.log("[UNFILTER] bareKey: " + bareKey);
+        
+        // Tìm vật phẩm theo nhiều cách khác nhau
+        Optional<Map.Entry<String, ItemImpl>> itemEntry = user.entry.getValue().items.entrySet()
+                .stream()
+                .filter(entry -> {
+                    String entryNormKey = normalizeKey(entry.getKey());
+                    String entryBareKey = entry.getKey().split(":", 2)[0].toUpperCase(Locale.ROOT);
+                    
+                    // So khớp bằng nhiều cách
+                    return entryNormKey.equals(normalizedKey) || 
+                           entryBareKey.equals(bareKey) ||
+                           entry.getKey().equalsIgnoreCase(validKey);
+                })
+                .findFirst();
+                
+        if (itemEntry.isPresent()) {
+            // Sử dụng key chính xác từ kho để unfilter
+            String actualKey = itemEntry.get().getKey();
+            Debug.log("[UNFILTER] Found key: " + actualKey);
+            user.entry.setValue(u -> u.withItemModifiedIfFound(actualKey, i -> i.withFiltered(false)));
+        } else {
+            // Nếu không tìm thấy vật phẩm, thử với các phiên bản khác nhau của key
+            Debug.log("[UNFILTER] Key not found, trying alternatives");
+            user.entry.setValue(u -> {
+                // Thử các phiên bản khác nhau của key
+                Map<String, ItemImpl> items = new HashMap<>(u.items);
+                boolean found = false;
+                
+                for (Map.Entry<String, ItemImpl> entry : items.entrySet()) {
+                    if (entry.getKey().startsWith(bareKey)) {
+                        Debug.log("[UNFILTER] Found similar key: " + entry.getKey());
+                        entry.setValue(entry.getValue().withFiltered(false));
+                        found = true;
+                    }
+                }
+                
+                if (!found) {
+                    Debug.log("[UNFILTER] No similar keys found, trying original key");
+                    return u.withItemModifiedIfFound(validKey, i -> i.withFiltered(false));
+                }
+                
+                return u.withItems(items);
+            });
+        }
+    }

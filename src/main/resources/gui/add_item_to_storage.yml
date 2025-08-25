@@ -1,0 +1,45 @@
+Settings:
+  Title: '   &0&lTHÊM VẬT PHẨM VÀO KHO'
+  Rows: 3
+  Sound: 'ui_button_click'
+
+# InputSlot không còn hiển thị item, để trống cho người chơi dễ nhận biết
+# Slot 13 sẽ trống để người chơi đặt item vào
+
+ConfirmItem:
+  Material: 'LIME_WOOL'
+  Name: '&a&lXác nhận'
+  Lore:
+    - '&7Nhấn để thêm vật phẩm vào kho'
+  Slot: 12
+
+CancelItem:
+  Material: 'RED_WOOL'
+  Name: '&c&lHuỷ bỏ'
+  Lore:
+    - '&7Nhấn để huỷ và thoát'
+  Slot: 16
+
+InfoItem:
+  Material: 'WRITTEN_BOOK'
+  Name: '&6&lSổ tay hướng dẫn'
+  Lore:
+    - '&e&l⚠ &7Click để xem hướng dẫn đầy đủ &e&l⚠'
+    - ''
+    - '&7• Đặt vật phẩm muốn thêm vào &f&lÔ TRỐNG &7ở giữa'
+    - '&7• Nhấn nút &a&lXÁC NHẬN &7bên trái để thêm vào khoaaaaa'
+    - '&7• Nhấn nút &c&lHUỶ BỎ &7bên phải để thoát'
+  Slot: 5
+
+DecorateItems:
+  border:
+    Material: 'BLACK_STAINED_GLASS_PANE'
+    Name: ' '
+    # Đảm bảo slots 5, 12, 13, 16 (ô chức năng và ô trống) không nằm trong danh sách kính đen
+    # QUAN TRỌNG: Không được đặt kính đen ở slot 13 (ô đặt item)
+    Slots: '0-4,6-11,14-15,17-26'
+    
+# Minh họa vị trí các slot trong GUI (để dễ tham khảo):
+# | 0| 1| 2| 3| 4| 5| 6| 7| 8| <- 5 = Book hướng dẫn
+# | 9|10|11|12|13|14|15|16|17| <- 12 = Xác nhận, 13 = Ô trống, 16 = Huỷ
+# |18|19|20|21|22|23|24|25|26|

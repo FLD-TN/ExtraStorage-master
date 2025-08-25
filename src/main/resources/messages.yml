@@ -1,0 +1,141 @@
+PREFIX: §8[§eKHO§bCHỨA§8] §8→ §r
+STATUS:
+  enabled: §aBật
+  disabled: §cTắt
+  unknown: §4Không xác định
+  filtered: §aBật bộ lọc
+  unfiltered: §cTắt bộ lọc
+  storing: §aĐang thêm vào kho...
+  full: §cKho đã đầy
+  empty: §7Kho trống
+INFO:
+  no-pending-request: '{prefix}§7Bạn không có yêu cầu kết bạn nào đang chờ xác nhận.'
+  pending-request-header: '{prefix}§eDanh sách các yêu cầu kết bạn đang chờ:'
+
+HELP:
+  header: §8§l------=====[ §8[§eᴋʜᴏ§bᴄʜứᴀ§8] v{version} §8§l]=====------
+  footer: §8§l------------------------------------------
+  Player:
+    help: '§8 > §c/{label} <help|?> §f: §7Hiển thị trang trợ giúp này.'
+    open: '§8 > §c/{label} [partner] §f: §7Mở kho chứa của bạn/đối tác.'
+    toggle: '§8 > §c/{label} toggle §f: §7Thay đổi trạng thái sử dụng kho chứa.'
+    filter: '§8 > §c/{label} filter §f: §7Mở bộ lọc của bạn.'
+    partner: '§8 > §c/{label} partner [add|remove|clear] [player] §f: §7Quản lý danh
+      sách đối tác của bạn.'
+    sell: '§8 > §c/{label} sell [<material-key> [amount]] §f: §7Bán vật phẩm trong
+      kho.'
+    withdraw: '§8 > §c/{label} withdraw <material-key> [amount] §f: §7Rút vật phẩm
+      từ kho.'
+  Admin:
+    help: '§8 > §c/{label} [help|?] §f: §7Hiển thị trang trợ giúp này.'
+    open: '§8 > §c/{label} open <player> §f: §7Mở kho chứa của người chơi khác.'
+    space: '§8 > §c/{label} space <amount> [player|*] §f: §7Thay đổi dung lượng kho
+      chứa.'
+    addspace: '§8 > §c/{label} addspace <amount> [player|*] §f: §7Tăng dung lượng
+      kho chứa.'
+    add: '§8 > §c/{label} add <material-key> <amount> [player] §f: §7Thêm số lượng
+      vật phẩm.'
+    subtract: '§8 > §c/{label} subtract <material-key> <amount> [player] §f: §7Trừ
+      số lượng vật phẩm.'
+    set: '§8 > §c/{label} set <material-key> <amount> [player] §f: §7Đặt số lượng
+      vật phẩm.'
+    reset: '§8 > §c/{label} reset <material-key|*> [player] §f: §7Đặt lại số lượng
+      vật phẩm.'
+    whitelist: '§8 > §c/{label} whitelist §f: §7Chỉnh sửa danh sách trắng (Whitelist).'
+    reload: '§8 > §c/{label} reload §f: §7Tải lại cấu hình.'
+    filtertoggle: '§8 > §c/{label} filtertoggle <true|false> §f: §7Bật/tắt bộ lọc toàn cục.'
+SUCCESS:
+  config-reload: '{prefix}§aĐã tải lại cấu hình thành công!'
+  space-changed: '{prefix}§7Dung lượng kho chứa đã được thay đổi thành §e{space}§7.'
+  space-increased: '{prefix}§7Dung lượng kho chứa đã được tăng thêm §e{space}§7.'
+  storage-usage-toggled: '{prefix}§7Bạn đã thay đổi trạng thái sử dụng kho chứa thành
+    §r{status}§7.'
+  filter-toggle-global: '{prefix}§7Trạng thái bộ lọc toàn cục đã được đặt thành §r{status}§7.'
+  filter-cleaned-up: '{prefix}§7Bạn đã dọn dẹp bộ lọc của mình.'
+  withdrew-item: '{prefix}§aBạn đã rút §ex{quantity} {item} §atừ kho chứa.'
+  moved-items-to-storage: '{prefix}§aBạn đã chuyển §ex{quantity} {item} §avào kho
+    chứa.'
+  made-partner: '{prefix}§6Bạn đã thêm §b{player} §6vào danh sách đối tác.'
+  being-partner: '{prefix}§2Bạn hiện là đối tác của §b{player}§2. Dùng lệnh §e/{label}
+   partner open {player} §2để mở kho của họ.'
+  removed-partner: '{prefix}§7Bạn đã loại bỏ §b{player} §7khỏi danh sách đối tác.'
+  no-longer-partner: '{prefix}§7Bạn không còn là đối tác của §b{player}§7 nữa.'
+  cleanup-partners-list: '{prefix}§7Bạn đã dọn dẹp danh sách đối tác.'
+  item-sold: '{prefix}§aBạn đã bán §ex{amount} §r{item} §avới giá §2${price}§a.'
+  item-added-to-whitelist: '{prefix}§7Bạn đã thêm §r{item} §7vào danh sách trắng.'
+  item-removed-from-whitelist: '{prefix}§7Bạn đã loại bỏ §r{item} §7khỏi danh sách
+    trắng.'
+  Add:
+    self: '{prefix}§7Bạn đã thêm §ex{quantity} {item} §7vào kho chứa của mình.'
+    sender: '{prefix}§7Bạn đã thêm §ex{quantity} {item} §7vào kho chứa của §b{player}§7.'
+    target: '{prefix}§7Bạn đã được §b{player} §7thêm §ex{quantity} {item} §7vào kho
+      chứa.'
+  Subtract:
+    self: '{prefix}§7Bạn đã trừ §ex{quantity} {item} §7khỏi kho chứa của mình.'
+    sender: '{prefix}§7Bạn đã trừ §ex{quantity} {item} §7khỏi kho chứa của §b{player}§7.'
+    target: '{prefix}§7Bạn đã bị §b{player} §7trừ §ex{quantity} {item} §7khỏi kho
+      chứa.'
+  Set:
+    self: '{prefix}§7Bạn đã đặt §r{item} §7là §ex{quantity} §7trong kho chứa của mình.'
+    sender: '{prefix}§7Bạn đã đặt §r{item} §7là §ex{quantity} §7trong kho chứa của
+      §b{player}§7.'
+    target: '{prefix}§7Bạn đã được §b{player} §7đặt §r{item} §7là §ex{quantity} §7trong
+      kho chứa.'
+  Reset:
+    self: '{prefix}§7Bạn đã đặt lại số lượng §r{item} §7trong kho chứa của mình.'
+    all: '{prefix}§7Đã đặt lại số lượng của tất cả vật phẩm trong kho chứa.'
+    all-sender: '{prefix}§7Bạn đã đặt lại số lượng của tất cả vật phẩm trong kho chứa
+      của §b{player}§7.'
+    sender: '{prefix}§7Bạn đã đặt lại số lượng §r{item} §7trong kho chứa của §b{player}§7.'
+    target: '{prefix}§7Bạn đã được §b{player} §7đặt lại số lượng §r{item} §7trong
+      kho chứa.'
+  request-sent: '{prefix}§aYêu cầu kết bạn đã được gửi tới §b{player}§a.'
+  partner-request-received: '{prefix}§eBạn nhận được yêu cầu kết bạn từ §b{player}§e.
+    Dùng /kho partner accept {player} để chấp nhận hoặc /kho partner deny {player} để
+    từ chối.'
+  request-denied: '{prefix}§cBạn đã từ chối yêu cầu kết bạn từ §b{player}§c.'
+  partner-request-denied: '{prefix}§cYêu cầu kết bạn của bạn đã bị từ chối bởi §b{player}§c.'
+WARN:
+  confirm-cleanup: '{prefix}§6Nhấp lại để xác nhận dọn dẹp!'
+  confirm-filter: '{prefix}§6Nhấp lại để xác nhận thêm vào bộ lọc!'
+  confirm-unfilter: '{prefix}§6Nhấp lại để xác nhận xóa khỏi bộ lọc!'
+  Stored:
+    ActionBar: '§f+{amount} §r{item} §7| §e/kho §ađể mở kho chứa'
+    Chat: '{prefix}§aĐã thêm §e{amount}x §r{item} §avào kho chứa!'
+    Filtered: '{prefix}§aĐã tự động thêm §e{amount}x §r{item} §avào kho (item đã lọc)!'
+  StorageIsFull: §c§lKho chứa của bạn đã đầy!
+  StorageAlmostFull: §e§lKho chứa của bạn gần đầy! ({percent}%)
+FAIL:
+  player-not-partner: '{prefix}§c§lBạn không phải là đối tác của §e{player}§c§l!'
+  player-not-found: '{prefix}§c§lKhông tìm thấy người chơi §e{player}§c§l!'
+  not-yourself: '{prefix}§c§lKhông thể mở kho của chính mình bằng lệnh này!'
+  no-permission: '{prefix}§c§lBạn không có quyền thực hiện!'
+  missing-args: '{prefix}§c§lThiếu đối số! §7Cách dùng: §e{usage}'
+  only-players: '{prefix}§c§lChỉ người chơi mới dùng được lệnh này!'
+  only-console: '{prefix}§c§lLệnh này chỉ dùng được trong console!'
+  not-number: '{prefix}§c§lGiá trị §e{value} §c§lkhông hợp lệ!'
+  must-enter-player: '{prefix}§c§lVui lòng nhập tên người chơi!'
+  max-space-not-used: '{prefix}§c§lDung lượng kho chứa chưa được sử dụng!'
+  space-exceeded: '{prefix}§c§lKhông thể tăng thêm, sẽ vượt giới hạn!'
+  item-blacklisted: '{prefix}§c§lVật phẩm này nằm trong danh sách đen!'
+  inventory-is-full: '{prefix}§c§lHành trang của bạn đã đầy!'
+  storage-is-full: '{prefix}§c§lKho chứa đã đầy, không thể thêm!'
+  storage-error: '{prefix}§c§lCó lỗi xảy ra khi thao tác với kho!'
+  item-not-allowed: '{prefix}§c§lVật phẩm này không được phép lưu trữ!'
+  filter-error: '{prefix}§c§lCó lỗi khi thêm vào bộ lọc!'
+  invalid-filter: '{prefix}§c§lBộ lọc không hợp lệ!'
+  filter-locked: '{prefix}§c§lBạn không có quyền sử dụng bộ lọc!'
+  not-enough-item: '{prefix}§cBạn (hoặc đối tác của bạn) không có đủ §r{item} §cđể
+    làm điều đó!'
+  not-enough-item-in-inventory: '{prefix}§cBạn không có đủ §r{item} §ctrong hành trang!'
+  item-not-filtered: '{prefix}§cBạn không thể chuyển những vật phẩm không có trong
+    bộ lọc vào kho chứa!'
+  already-partner: '{prefix}§cNgười chơi đó đã là đối tác của bạn rồi!'
+  not-partner: '{prefix}§cNgười chơi đó không phải là đối tác của bạn!'
+  partners-list-empty: '{prefix}§cDanh sách đối tác của bạn trống!'
+  item-not-in-storage: '{prefix}§cVật phẩm đó không có trong kho chứa của §e{player}§c!'
+  cannot-be-sold: '{prefix}§cBạn không thể bán vật phẩm này!'
+  invalid-item: '{prefix}§cVật phẩm này không hợp lệ!'
+  item-already-whitelisted: '{prefix}§cVật phẩm đó đã có trong danh sách trắng!'
+  request-already-sent: '{prefix}§cBạn đã gửi yêu cầu kết bạn tới người này rồi.'
+  no-request: '{prefix}§cKhông có yêu cầu kết bạn nào từ người này.'

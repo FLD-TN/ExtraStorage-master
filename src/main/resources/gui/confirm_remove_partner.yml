@@ -1,0 +1,26 @@
+Settings:
+  Title: '         &0XÁC NHẬN XOÁ ĐỐI TÁC'
+  Rows: 3
+  Sound: 'ui_button_click'
+
+YesItem:
+  Material: 'LIME_WOOL'
+  Name: '&aXác nhận xoá đối tác này'
+  Lore:
+    - ''
+    - '&7Click để xác nhận xoá đối tác khỏi danh sách.'
+  Slot: 12
+
+NoItem:
+  Material: 'RED_WOOL'
+  Name: '&cHuỷ bỏ'
+  Lore:
+    - ''
+    - '&7Click để huỷ thao tác xoá.'
+  Slot: 14
+
+DecorateItems:
+  border:
+    Material: 'BLACK_STAINED_GLASS_PANE'
+    Name: ' '
+    Slots: [0-8, 18-26]

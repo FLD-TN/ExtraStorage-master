@@ -1,0 +1,306 @@
+package me.hsgamer.extrastorage.gui;
+
+import me.hsgamer.extrastorage.Debug;
+import me.hsgamer.extrastorage.api.user.User;
+import me.hsgamer.extrastorage.configs.MaterialTypeConfig;
+import me.hsgamer.extrastorage.gui.base.ESGui;
+import me.hsgamer.extrastorage.gui.icon.Icon;
+import me.hsgamer.extrastorage.util.ItemUtil;
+import org.bukkit.Material;
+import org.bukkit.entity.Player;
+import org.bukkit.inventory.ItemStack;
+import org.bukkit.inventory.meta.ItemMeta;
+import org.bukkit.event.inventory.InventoryAction;
+
+import java.util.ArrayList;
+import java.util.List;
+
+public class AddItemToStorageGui extends ESGui {
+    // Instance của MaterialTypeConfig để kiểm tra các loại vật liệu
+    private final MaterialTypeConfig materialTypeConfig;
+
+    @Override
+    public void reopenGui(int page) {
+        new AddItemToStorageGui(player).open();
+    }
+
+    @Override
+    public void reopenGui(int page, ESGui.SortType sort, boolean order) {
+        new AddItemToStorageGui(player).open();
+    }
+
+    public AddItemToStorageGui(Player player) {
+        super("gui/add_item_to_storage", player, 1);
+        // Khởi tạo MaterialTypeConfig từ ExtraStorage instance
+        this.materialTypeConfig = instance.getMaterialTypeConfig();
+
+        this.handleClick(event -> {
+            // Lấy thông tin cơ bản về sự kiện
+            int slot = event.getEvent().getSlot();
+            int rawSlot = event.getEvent().getRawSlot();
+            InventoryAction action = event.getEvent().getAction();
+
+            Debug.log("[GUI] Click event: Action=" + action + ", Slot=" + slot + ", RawSlot=" + rawSlot + ", TopClick="
+                    + event.isTopClick() + ", Inventory=" + event.getEvent().getClickedInventory());
+
+            // Luôn mặc định hủy tất cả các sự kiện để tránh lỗi
+            event.getEvent().setCancelled(true);
+
+            if (event.isTopClick()) {
+                // Nếu click vào phần GUI bên trên
+                if (slot == 14) {
+                    // Slot 14 là ô đặt item, cho phép tất cả các tương tác
+                    Debug.log("[GUI] Allowing interaction with item slot 14");
+                    event.getEvent().setCancelled(false);
+                    
+                    // Thông báo hướng dẫn nếu slot trống
+                    if (this.getInventory().getItem(14) == null || 
+                            this.getInventory().getItem(14).getType() == Material.AIR) {
+                        player.sendMessage("§e[ExtraStorage] §7Hãy đặt vật phẩm muốn thêm vào kho tại đây.");
+                    }
+                } else if (slot == 12) {
+                    // Nút xác nhận - cho phép click để trigger icon handler
+                    Debug.log("[GUI] Confirm button clicked");
+                    event.getEvent().setCancelled(false);
+                } else if (slot == 16) {
+                    // Nút hủy bỏ - cho phép click để trigger icon handler
+                    Debug.log("[GUI] Cancel button clicked");
+                    event.getEvent().setCancelled(false);
+                } else if (slot == 5) {
+                    // Nút hướng dẫn - cho phép click để trigger icon handler
+                    Debug.log("[GUI] Guide book clicked");
+                    event.getEvent().setCancelled(false);
+                } else {
+                    // Tất cả các ô khác (kính đen, v.v.) - ngăn mọi tương tác
+                    Debug.log("[GUI] Blocking interaction with decoration slot " + slot);
+                    event.getEvent().setCancelled(true);
+                }
+            } else {
+                // Người chơi click vào inventory của họ
+                
+                if (action == InventoryAction.MOVE_TO_OTHER_INVENTORY) {
+                    // Xử lý shift-click đặc biệt
+                    Debug.log("[GUI] Shift-click detected from player inventory");
+                    event.getEvent().setCancelled(true);  // Luôn hủy shift-click mặc định
+                    
+                    // Lấy item đang được shift-click
+                    ItemStack clickedItem = event.getEvent().getCurrentItem();
+                    
+                    // Kiểm tra xem slot 14 có trống không
+                    boolean isSlot14Empty = this.getInventory().getItem(14) == null || 
+                                            this.getInventory().getItem(14).getType() == Material.AIR;
+                    
+                    // Nếu slot 14 trống và item hợp lệ, đặt item vào đó
+                    if (isSlot14Empty && clickedItem != null && clickedItem.getType() != Material.AIR) {
+                        // Di chuyển item thủ công thay vì dựa vào hành vi mặc định
+                        ItemStack itemToMove = clickedItem.clone();
+                        itemToMove.setAmount(1);  // Chỉ lấy 1 item
+                        
+                        // Đặt item vào slot 14
+                        this.getInventory().setItem(14, itemToMove);
+                        
+                        // Giảm số lượng item trong inventory người chơi
+                        if (clickedItem.getAmount() > 1) {
+                            clickedItem.setAmount(clickedItem.getAmount() - 1);
+                        } else {
+                            event.getEvent().setCurrentItem(null);
+                        }
+                        
+                        Debug.log("[GUI] Manually moved item to slot 14");
+                    } else {
+                        Debug.log("[GUI] Blocked shift-click: Slot 14 full or item invalid");
+                    }
+                } else {
+                    // Cho phép các tương tác khác với inventory của người chơi
+                    Debug.log("[GUI] Allowing normal interaction with player inventory");
+                    event.getEvent().setCancelled(false);
+                }
+            }
+        });
+        this.load();
+    }
+
+    /**
+     * Kiểm tra xem vật phẩm có được phép lưu trữ không
+     * Sử dụng MaterialTypeConfig để kiểm tra thay vì hardcoded logic
+     * 
+     * @param material Loại vật phẩm cần kiểm tra
+     * @return true nếu được phép lưu trữ, false nếu không được phép
+     */
+    private boolean isAllowedItem(Material material) {
+        return materialTypeConfig.isAllowedItem(material);
+    }
+
+    private void load() {
+        // Để slot 14 trống để người chơi có thể dễ dàng nhận biết đây là nơi để đặt vật phẩm
+        // Không đặt bất kỳ item nào vào slot 14 để nó hoàn toàn trống
+
+        ItemMeta meta;
+        List<String> lore;
+
+        // Nút xác nhận (slot 12)
+        ItemStack confirmButton = new ItemStack(Material.LIME_WOOL);
+        meta = confirmButton.getItemMeta();
+        meta.setDisplayName("§a§lXác nhận");
+        confirmButton.setItemMeta(meta);
+
+        Icon confirmIcon = new Icon(confirmButton)
+                .handleClick(event -> {
+                    ItemStack item = this.getInventory().getItem(14);
+                    if (item == null || item.getType() == Material.AIR) {
+                        player.sendMessage("§c[ExtraStorage] §f§lBạn phải đặt vật phẩm muốn thêm vào ô trống!");
+                        // Phát hiệu ứng âm thanh lỗi
+                        player.playSound(player.getLocation(), org.bukkit.Sound.ENTITY_VILLAGER_NO, 1.0f, 1.0f);
+                        return;
+                    }
+
+                    // Không cho phép thêm kính đen vào kho
+                    if (item.getType() == Material.BLACK_STAINED_GLASS_PANE) {
+                        player.sendMessage("§c[ExtraStorage] §f§lKhông thể thêm kính đen trang trí vào kho!");
+                        player.playSound(player.getLocation(), org.bukkit.Sound.ENTITY_VILLAGER_NO, 1.0f, 1.0f);
+                        return;
+                    }
+
+                    // Kiểm tra xem vật phẩm có được phép lưu trữ không
+                    Material material = item.getType();
+                    if (!isAllowedItem(material)) {
+                        player.sendMessage("§c[ExtraStorage] §f§lVật phẩm này không được phép lưu trữ trong kho!");
+                        // Phát hiệu ứng âm thanh lỗi
+                        player.playSound(player.getLocation(), org.bukkit.Sound.ENTITY_VILLAGER_NO, 1.0f, 1.0f);
+
+                        // Cung cấp thông tin chi tiết hơn dựa trên loại vật phẩm
+                        if (materialTypeConfig.isBlacklisted(material)) {
+                            player.sendMessage("§c[ExtraStorage] Vật phẩm này nằm trong danh sách vật phẩm bị cấm.");
+                        } else {
+                            player.sendMessage("§e[ExtraStorage] §fChỉ có thể thêm các loại vật phẩm sau vào kho:");
+                            player.sendMessage("§e• §fCác loại block (đá, gỗ, kính, ...)");
+                            player.sendMessage("§e• §fQuặng và khoáng sản (kể cả quặng thô)");
+                            player.sendMessage("§e• §fNông sản và hạt giống");
+                            player.sendMessage("§e• §fVật phẩm từ quái vật");
+                        }
+                        return;
+                    }
+
+                    User user = instance.getUserManager().getUser(player);
+                    Debug.log("[AddItem] Attempting to add item: " + material.name());
+
+                    try {
+                        // Tạo một bản sao của item để tránh lỗi
+                        ItemStack itemCopy = item.clone();
+
+                        // Lấy Material key của item
+                        String itemKey = ItemUtil.toMaterialKey(itemCopy);
+                        Debug.log("[AddItem] Item key: " + itemKey);
+
+                        // Kiểm tra vật phẩm đã tồn tại - force check trước khi thêm mới
+                        boolean itemExists = user.getStorage().getItem(itemKey).isPresent();
+
+                        // Thêm vật phẩm vào kho (sẽ tự động đánh dấu là filtered)
+                        user.getStorage().addNewItem(itemCopy);
+
+                        // Tên vật phẩm hiển thị đẹp hơn
+                        String itemName = instance.getSetting().getNameFormatted(itemCopy, true);
+
+                        if (itemExists) {
+                            // Vật phẩm đã có trong kho
+                            player.sendMessage(
+                                    "§e[ExtraStorage] §f§lVật phẩm này đã có trong kho! Đã cập nhật trạng thái.");
+                            // Phát hiệu ứng âm thanh thành công
+                            player.playSound(player.getLocation(), org.bukkit.Sound.ENTITY_EXPERIENCE_ORB_PICKUP, 0.5f, 1.0f);
+                        } else {
+                            // Vật phẩm chưa có trong kho, đã thêm mới
+                            player.sendMessage("§a[ExtraStorage] §f§lĐã thêm vật phẩm §e" + itemName + " §f§lvào kho!");
+                            // Phát hiệu ứng âm thanh thành công
+                            player.playSound(player.getLocation(), org.bukkit.Sound.ENTITY_PLAYER_LEVELUP, 0.5f, 1.0f);
+                            player.closeInventory();
+                        }
+
+                        // Xóa item khỏi GUI sau khi xử lý thành công
+                        getInventory().setItem(14, null);
+
+                    } catch (Exception e) {
+                        // Xử lý lỗi nếu có
+                        player.sendMessage("§c[ExtraStorage] §f§lĐã xảy ra lỗi khi thêm vật phẩm vào kho!");
+                        player.sendMessage("§c[ExtraStorage] §fLỗi: " + e.getMessage());
+                        // Ghi log lỗi
+                        instance.getLogger().warning("Error adding item to storage: " + e.getMessage());
+                        e.printStackTrace();
+                    }
+                })
+                .setSlots(new int[] { 12 });
+        this.addIcon(confirmIcon);
+
+        // Nút huỷ (slot 16)
+        ItemStack cancelButton = new ItemStack(Material.RED_WOOL);
+        meta = cancelButton.getItemMeta();
+        meta.setDisplayName("§c§lHuỷ bỏ");
+        cancelButton.setItemMeta(meta);
+
+        Icon cancelIcon = new Icon(cancelButton)
+                .handleClick(event -> {
+                    // Kiểm tra nếu có item trong slot 14 thì trả lại cho người chơi
+                    ItemStack itemInSlot = this.getInventory().getItem(14);
+                    if (itemInSlot != null && itemInSlot.getType() != Material.AIR) {
+                        // Trả lại item cho người chơi
+                        ItemUtil.giveItem(player, itemInSlot);
+                        player.sendMessage("§e[ExtraStorage] §7Vật phẩm đã được trả lại vào túi đồ của bạn.");
+                    }
+                    player.closeInventory();
+                })
+                .setSlots(new int[] { 16 });
+        this.addIcon(cancelIcon);
+
+        // Thêm viền xung quanh giao diện để làm nổi bật vị trí đặt vật phẩm
+        ItemStack border = new ItemStack(Material.BLACK_STAINED_GLASS_PANE);
+        meta = border.getItemMeta();
+        meta.setDisplayName("§8 ");  // Tên rỗng với màu đen
+        meta.addItemFlags(org.bukkit.inventory.ItemFlag.HIDE_ATTRIBUTES);  // Ẩn các thuộc tính không cần thiết
+        border.setItemMeta(meta);
+
+        // Cập nhật lại các slot viền, đảm bảo slot 14 không có trong danh sách
+        int[] borderSlots = { 0, 1, 2, 3, 4, 6, 7, 8, 9, 10, 11, 13, 15, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26 };
+        Icon borderIcon = new Icon(border).setSlots(borderSlots);
+        this.addIcon(borderIcon);
+
+        // Thêm sách hướng dẫn chi tiết (slot 5)
+        ItemStack guideBook = new ItemStack(Material.WRITTEN_BOOK);
+        meta = guideBook.getItemMeta();
+        meta.setDisplayName("§6§lSổ tay hướng dẫn");
+        lore = new ArrayList<>();
+        lore.add("§e§l⚠ §7Click để xem hướng dẫn đầy đủ §e§l⚠");
+        lore.add("");
+        lore.add("§7• Đặt vật phẩm muốn thêm vào §f§lÔ TRỐNG §7dưới sổ tay");
+        lore.add("§7• Nhấn nút §a§lXÁC NHẬN §7bên trái để thêm vào kho");
+        lore.add("§7• Nhấn nút §c§lHUỶ BỎ §7bên phải để thoát");
+        meta.setLore(lore);
+
+        // Thêm flags để hiển thị như sách thật
+        meta.addItemFlags(org.bukkit.inventory.ItemFlag.HIDE_ATTRIBUTES);
+        meta.addItemFlags(org.bukkit.inventory.ItemFlag.HIDE_POTION_EFFECTS);
+        guideBook.setItemMeta(meta);
+
+        Icon guideIcon = new Icon(guideBook)
+                .handleClick(event -> {
+                    // Hiển thị hướng dẫn khi click vào sách
+                    player.sendMessage("§6§l=== HƯỚNG DẪN THÊM VẬT PHẨM VÀO KHO ===");
+                    player.sendMessage("§e1. §fĐặt vật phẩm muốn thêm vào ô trống dưới sách hướng dẫn");
+                    player.sendMessage("§e2. §fNhấn nút §a§lXÁC NHẬN §fbên trái (nút xanh) để thêm vào kho");
+                    player.sendMessage("§e3. §fNhấn nút §c§lHUỶ BỎ §fbên phải (nút đỏ) để thoát");
+                    player.sendMessage("§e4. §fVật phẩm sẽ được lưu trữ và có thể được lọc trong kho");
+                    player.sendMessage("");
+                    player.sendMessage("§6§l=== CÁC VẬT PHẨM CÓ THỂ THÊM VÀO KHO ===");
+                    player.sendMessage("§e• §fCác loại block: đá, gỗ, kính, bê tông, v.v.");
+                    player.sendMessage("§e• §fQuặng và khoáng sản: kim cương, sắt, vàng, đồng, v.v.");
+                    player.sendMessage("§e• §fNông sản: lúa mì, khoai tây, cà rốt, v.v.");
+                    player.sendMessage("§e• §fVật phẩm từ quái vật: xương, thịt thối, mắt nhện, v.v.");
+                    player.sendMessage("");
+                    player.sendMessage(
+                            "§7(Danh sách vật phẩm cho phép có thể điều chỉnh trong file material_types.yml)");
+                })
+                .setSlots(new int[] { 5 });
+        this.addIcon(guideIcon);
+        
+        // Đảm bảo slot 14 không có item nào (kể cả kính đen)
+        this.getInventory().setItem(14, null);
+    }
+}
