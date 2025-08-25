@@ -12,6 +12,7 @@ import org.bukkit.event.inventory.InventoryClickEvent;
 import org.bukkit.event.inventory.InventoryDragEvent;
 import org.bukkit.event.inventory.InventoryMoveItemEvent;
 import org.bukkit.inventory.InventoryHolder;
+import org.bukkit.inventory.ItemStack;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -83,7 +84,44 @@ public final class InventoryListener
         if (!(holder instanceof GuiCreator))
             return;
 
-        // Hủy toàn bộ hành động kéo (drag) trong GUI
+        // Nếu là GUI AddItemToStorageGui, cho phép kéo vào slot 13
+        if (holder instanceof me.hsgamer.extrastorage.gui.AddItemToStorageGui) {
+            // Kiểm tra xem có slot nào thuộc về GUI (không phải inventory người chơi)
+            boolean hasTopInventorySlot = false;
+            for (int slot : event.getRawSlots()) {
+                if (slot < event.getView().getTopInventory().getSize()) {
+                    // Nếu slot không phải là slot 13, hủy bỏ
+                    if (slot != 13) {
+                        hasTopInventorySlot = true;
+                        break;
+                    }
+                }
+            }
+
+            // Nếu chỉ kéo vào slot 13 hoặc kéo vào inventory người chơi, cho phép
+            if (!hasTopInventorySlot || event.getRawSlots().contains(13)) {
+                // Kiểm tra item có hợp lệ không nếu kéo vào slot 13
+                if (event.getRawSlots().contains(13)) {
+                    Player player = (Player) event.getWhoClicked();
+                    ItemStack cursorItem = event.getOldCursor();
+
+                    me.hsgamer.extrastorage.gui.AddItemToStorageGui gui = (me.hsgamer.extrastorage.gui.AddItemToStorageGui) holder;
+
+                    // Kiểm tra xem item có được phép lưu trữ không
+                    if (!gui.isItemAllowed(cursorItem.getType())) {
+                        event.setCancelled(true);
+                        player.sendMessage("§c[ExtraStorage] §fVật phẩm này không được phép lưu trữ trong kho!");
+                        return;
+                    }
+
+                    // Cho phép kéo vào slot 13
+                    return;
+                }
+                return;
+            }
+        }
+
+        // Hủy toàn bộ hành động kéo (drag) trong các GUI khác
         event.setCancelled(true);
     }
 

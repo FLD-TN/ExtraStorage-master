@@ -99,8 +99,7 @@ public class AddItemToStorageGui extends ESGui {
                 }
             }
 
-            // Mặc định hủy tất cả các sự kiện để tránh lỗi
-            // Các trường hợp cụ thể sẽ được xử lý bên dưới
+            // Luôn mặc định hủy tất cả các sự kiện để tránh lỗi
             event.getEvent().setCancelled(true);
 
             if (event.isTopClick()) {
@@ -243,45 +242,19 @@ public class AddItemToStorageGui extends ESGui {
                     }
                 } else {
                     // Cho phép các tương tác bình thường với inventory của người chơi
-                    // và cho phép người chơi kéo vật phẩm vào slot 13
-                    if (event.getEvent().getRawSlot() == 13 && (action == InventoryAction.PLACE_ALL ||
-                            action == InventoryAction.PLACE_ONE ||
-                            action == InventoryAction.PLACE_SOME ||
-                            action == InventoryAction.SWAP_WITH_CURSOR)) {
-
-                        Debug.log("[GUI] Drag/Place action to slot 13 detected: " + action);
-
-                        // Kiểm tra xem item có được phép lưu trữ không
-                        if (cursorItem != null && cursorItem.getType() != Material.AIR) {
-                            Material material = cursorItem.getType();
-                            if (isAllowedItem(material)) {
-                                // Cho phép đặt item vào slot 13
-                                event.getEvent().setCancelled(false);
-                                Debug.log("[GUI] Allowing placing item in slot 13");
-                                player.sendMessage(
-                                        "§a[ExtraStorage] §fĐã đặt vật phẩm. Nhấn nút Xác nhận để thêm vào kho.");
-                            } else {
-                                // Không cho phép đặt vật phẩm không hợp lệ
-                                event.getEvent().setCancelled(true);
-                                player.sendMessage(
-                                        "§c[ExtraStorage] §fVật phẩm này không được phép lưu trữ trong kho!");
-                                if (materialTypeConfig.isBlacklisted(material)) {
-                                    player.sendMessage(
-                                            "§c[ExtraStorage] Vật phẩm này nằm trong danh sách vật phẩm bị cấm.");
-                                }
-                            }
-                        }
-                    } else if (action == InventoryAction.PLACE_ALL ||
+                    // nhưng cũng cần kiểm tra nếu người chơi đang cố gắng kéo vật phẩm vào slot 13
+                    if (action == InventoryAction.PLACE_ALL ||
                             action == InventoryAction.PLACE_ONE ||
                             action == InventoryAction.PLACE_SOME ||
                             action == InventoryAction.SWAP_WITH_CURSOR) {
 
                         Debug.log("[GUI] Drag/Place action detected: " + action);
-                        // Cho phép người chơi tương tác với inventory của họ
-                        // nhưng nhắc nhở họ có thể sử dụng shift-click hoặc kéo trực tiếp vào slot 13
+                        // Giả sử người chơi đang có thể cố gắng kéo vật phẩm vào slot 13
+                        // Chỉ cần hủy bỏ sự kiện này, nhưng nhắc nhở họ sử dụng shift-click
                         player.sendMessage(
-                                "§e[ExtraStorage] §fĐể thêm vật phẩm, hãy SHIFT+CLICK hoặc kéo trực tiếp vào ô trống.");
-                        event.getEvent().setCancelled(false);
+                                "§e[ExtraStorage] §fĐể thêm vật phẩm, hãy SHIFT+CLICK vào vật phẩm trong túi đồ của bạn.");
+                        player.playSound(player.getLocation(), org.bukkit.Sound.BLOCK_NOTE_BLOCK_BASS, 0.5f, 1.0f);
+                        event.getEvent().setCancelled(true);
                     } else {
                         // Cho phép các tương tác khác với inventory của người chơi
                         Debug.log("[GUI] Allowing normal interaction with player inventory");
@@ -314,16 +287,6 @@ public class AddItemToStorageGui extends ESGui {
         }
 
         return true;
-    }
-
-    /**
-     * Kiểm tra công khai xem một loại vật liệu có được phép lưu trữ không
-     *
-     * @param material Loại vật liệu cần kiểm tra
-     * @return true nếu được phép, false nếu không
-     */
-    public boolean isItemAllowed(Material material) {
-        return isAllowedItem(material);
     }
 
     /**
@@ -391,8 +354,7 @@ public class AddItemToStorageGui extends ESGui {
         // Nút xác nhận
         Icon confirmIcon = new Icon(confirmButton)
                 .setSlots(11)
-                .handleClick(event -> {
-                    Player p = event.getPlayer();
+                .addClickAction((e, p) -> {
                     // Lấy item trong slot 13
                     ItemStack item = this.getInventory().getItem(13);
 
@@ -430,8 +392,7 @@ public class AddItemToStorageGui extends ESGui {
         // Nút hủy bỏ
         Icon cancelIcon = new Icon(cancelButton)
                 .setSlots(15)
-                .handleClick(event -> {
-                    Player p = event.getPlayer();
+                .addClickAction((e, p) -> {
                     // Lấy item trong slot 13
                     ItemStack item = this.getInventory().getItem(13);
 
@@ -471,8 +432,7 @@ public class AddItemToStorageGui extends ESGui {
         // Cài đặt sách hướng dẫn
         Icon guideIcon = new Icon(guideBook)
                 .setSlots(4)
-                .handleClick(event -> {
-                    Player p = event.getPlayer();
+                .addClickAction((e, p) -> {
                     // Hiển thị hướng dẫn khi người chơi click vào sách
                     p.sendMessage("");
                     p.sendMessage("§e§l=== HƯỚNG DẪN THÊM VẬT PHẨM VÀO KHO ===");
