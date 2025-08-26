@@ -47,24 +47,54 @@ public final class InventoryListener
         if (!(holder instanceof GuiCreator))
             return;
 
-        // Ngăn chặn tất cả các tương tác mặc định với GUI
-        // Điều này ngăn người chơi lấy các item trong GUI
-        event.setCancelled(true);
-
-        // Nếu không có inventory được click hoặc click bên ngoài, chỉ cần hủy sự kiện
-        if (event.getClickedInventory() == null)
-            return;
-
         GuiCreator gui = (GuiCreator) holder;
+
+        // Nếu không có inventory được click, chỉ cần hủy sự kiện
+        if (event.getClickedInventory() == null) {
+            event.setCancelled(true);
+            return;
+        }
+
+        // Xử lý đặc biệt cho AddItemToStorageGui
+        if (holder instanceof me.hsgamer.extrastorage.gui.AddItemToStorageGui) {
+            // Nếu click vào inventory của người chơi, cho phép tương tác
+            if (event.getClickedInventory().getHolder() != holder) {
+                // Cho phép các tương tác bình thường với inventory người chơi
+                return;
+            }
+
+            // Nếu click vào slot 13 của GUI (ô trống để đặt item), cho phép tương tác
+            if (event.getSlot() == 13) {
+                me.hsgamer.extrastorage.gui.AddItemToStorageGui addItemGui = (me.hsgamer.extrastorage.gui.AddItemToStorageGui) holder;
+
+                // Nếu đang shift-click từ inventory của người chơi
+                if (event.isShiftClick() && event.getCurrentItem() != null
+                        && event.getCurrentItem().getType() != org.bukkit.Material.AIR) {
+                    // Kiểm tra xem vật phẩm có được phép lưu trữ không
+                    if (!addItemGui.isItemStackAllowed(event.getCurrentItem())) {
+                        event.setCancelled(true);
+                        player.sendMessage("§c[ExtraStorage] §fVật phẩm này không được phép lưu trữ trong kho!");
+                        return;
+                    }
+                    // Cho phép shift-click
+                    return;
+                }
+
+                // Cho phép tương tác với slot 13
+                return;
+            }
+        }
+
+        // Đối với các trường hợp khác, ngăn chặn tất cả các tương tác với GUI
+        if (event.getClickedInventory().getHolder() instanceof GuiCreator) {
+            event.setCancelled(true);
+        }
 
         if (this.isDelayed(player))
             return;
 
         GuiClickEvent clickEvent = new GuiClickEvent(event, gui, player);
         gui.callClick(clickEvent);
-
-        // Ngay cả khi clickEvent không bị hủy, chúng ta vẫn không cho phép
-        // các tương tác mặc định, chỉ cho phép các hành động tùy chỉnh
 
         // Chỉ xử lý icon nếu click vào GUI
         if (event.getClickedInventory().getHolder() instanceof GuiCreator) {
@@ -108,7 +138,7 @@ public final class InventoryListener
                     me.hsgamer.extrastorage.gui.AddItemToStorageGui gui = (me.hsgamer.extrastorage.gui.AddItemToStorageGui) holder;
 
                     // Kiểm tra xem item có được phép lưu trữ không
-                    if (!gui.isItemAllowed(cursorItem.getType())) {
+                    if (!gui.isItemStackAllowed(cursorItem)) {
                         event.setCancelled(true);
                         player.sendMessage("§c[ExtraStorage] §fVật phẩm này không được phép lưu trữ trong kho!");
                         return;

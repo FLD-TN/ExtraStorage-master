@@ -31,6 +31,9 @@ public class ConfigManager {
         FileConfiguration messageConfig = YamlConfiguration.loadConfiguration(messageFile);
         Message.init(messageConfig);
 
+        // Xóa cache của GuiConfig để đảm bảo tải lại từ file
+        me.hsgamer.extrastorage.gui.config.GuiConfig.clearCache();
+
         // Load GUI files
         File guiFolder = new File(plugin.getDataFolder(), "gui");
         if (!guiFolder.exists()) {

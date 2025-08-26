@@ -18,13 +18,20 @@ public abstract class CommandListener
     }
 
     protected void add(CommandListener listener) {
-        if (!listener.getClass().isAnnotationPresent(Command.class)) return;
+        if (!listener.getClass().isAnnotationPresent(Command.class))
+            return;
         listeners.add(listener);
+    }
+
+    // Phương thức để lấy danh sách các lệnh con
+    public List<CommandListener> getListeners() {
+        return this.listeners;
     }
 
     public CommandListener getCommand(String command) {
         return listeners.stream()
-                .filter(lis -> Arrays.stream(lis.getClass().getAnnotation(Command.class).value()).anyMatch(command::equalsIgnoreCase))
+                .filter(lis -> Arrays.stream(lis.getClass().getAnnotation(Command.class).value())
+                        .anyMatch(command::equalsIgnoreCase))
                 .findFirst()
                 .orElse(null);
     }
@@ -32,7 +39,8 @@ public abstract class CommandListener
     public abstract void execute(CommandContext context);
 
     @Override
-    public List<String> onTabComplete(CommandSender sender, org.bukkit.command.Command command, String label, String[] args) {
+    public List<String> onTabComplete(CommandSender sender, org.bukkit.command.Command command, String label,
+            String[] args) {
         return null;
     }
 

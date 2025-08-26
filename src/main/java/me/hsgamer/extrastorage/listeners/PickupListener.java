@@ -4,6 +4,7 @@ import com.bgsoftware.wildstacker.api.WildStackerAPI;
 import com.craftaro.ultimatestacker.api.UltimateStackerApi;
 import com.craftaro.ultimatestacker.api.stack.item.StackedItemManager;
 import dev.rosewood.rosestacker.api.RoseStackerAPI;
+import me.hsgamer.extrastorage.Debug;
 import me.hsgamer.extrastorage.ExtraStorage;
 import me.hsgamer.extrastorage.api.storage.Storage;
 import me.hsgamer.extrastorage.api.user.User;
@@ -59,11 +60,6 @@ public class PickupListener implements Listener {
         else if (pluginManager.isPluginEnabled("RoseStacker"))
             return new PickupHandler() {
                 @Override
-                public EventPriority getPickupPriority() {
-                    return EventPriority.LOWEST;
-                }
-
-                @Override
                 public int getAmount(EntityPickupItemEvent event, Item entity, ItemStack item) {
                     RoseStackerAPI api = RoseStackerAPI.getInstance();
                     dev.rosewood.rosestacker.stack.StackedItem stackedItem = api.getStackedItem(entity);
@@ -92,38 +88,59 @@ public class PickupListener implements Listener {
 
                 @Override
                 public void applyAmount(Item entity, ItemStack item, int amount) {
-
+                    // Không cần thực hiện hành động nào cho trường hợp mặc định
                 }
             };
     }
 
     private void register() {
         instance.getServer().getPluginManager().registerEvent(EntityPickupItemEvent.class, this,
-                pickupHandler.getPickupPriority(), (listener, event) -> {
+                // Sử dụng HIGHEST thay vì LOW để đảm bảo plugin chúng ta xử lý trước các plugin
+                // khác
+                EventPriority.HIGHEST, (listener, event) -> {
                     if (event instanceof EntityPickupItemEvent) {
-                        EntityPickupItemEvent pickupEvent = (EntityPickupItemEvent) event;
-                        onEntityPickupItem(pickupEvent);
+                        try {
+                            EntityPickupItemEvent pickupEvent = (EntityPickupItemEvent) event;
+                            onEntityPickupItem(pickupEvent);
+                        } catch (Exception e) {
+                            // Ghi log ngoại lệ để dễ debug
+                            instance.getLogger().warning("Error processing pickup event: " + e.getMessage());
+                            Debug.log("[PickupListener] Exception in pickup handler: " + e.toString());
+                        }
                     }
                 }, instance, true);
     }
 
     private void onEntityPickupItem(EntityPickupItemEvent event) {
-        if ((!instance.getSetting().isPickupToStorage()) || (!(event.getEntity() instanceof Player)))
+        // Kiểm tra xem tính năng pickup to storage có được bật không
+        if ((!instance.getSetting().isPickupToStorage()) || (!(event.getEntity() instanceof Player))) {
+            Debug.log("[PickupListener] Pickup to storage is disabled or entity is not a player");
             return;
+        }
+
         Player player = (Player) event.getEntity();
-
         Item entity = event.getItem();
-        if (instance.getSetting().getBlacklistWorlds().contains(entity.getWorld().getName()))
-            return;
 
-        // If the entity was marked with bypass_storage, don't process it further
-        if (entity.hasMetadata("bypass_storage"))
+        // Kiểm tra xem thế giới có nằm trong danh sách đen không
+        if (instance.getSetting().getBlacklistWorlds().contains(entity.getWorld().getName())) {
+            Debug.log("[PickupListener] World is blacklisted: " + entity.getWorld().getName());
             return;
+        }
+
+        // Nếu entity được đánh dấu bypass_storage, không xử lý
+        if (entity.hasMetadata("bypass_storage")) {
+            Debug.log("[PickupListener] Item has bypass_storage metadata, skipping");
+            return;
+        }
 
         // Clone item và giữ lại các meta quan trọng để đảm bảo tương thích với các
         // plugin khác
         ItemStack originalItem = entity.getItemStack();
         ItemStack item = originalItem.clone();
+
+        // Debug log
+        Debug.log("[PickupListener] Processing pickup: " + item.getType() + " x" + item.getAmount() + " for player "
+                + player.getName());
 
         // Đảm bảo rằng chúng ta có bản sao hoàn chỉnh của metadata
         if (originalItem.hasItemMeta()) {
@@ -212,10 +229,6 @@ public class PickupListener implements Listener {
     }
 
     private interface PickupHandler {
-        default EventPriority getPickupPriority() {
-            return EventPriority.LOW;
-        }
-
         int getAmount(EntityPickupItemEvent event, Item entity, ItemStack item);
 
         void applyAmount(Item entity, ItemStack item, int amount);

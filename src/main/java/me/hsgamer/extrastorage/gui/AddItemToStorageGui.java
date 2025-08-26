@@ -1,20 +1,22 @@
 package me.hsgamer.extrastorage.gui;
 
 import me.hsgamer.extrastorage.Debug;
-import me.hsgamer.extrastorage.api.user.User;
 import me.hsgamer.extrastorage.configs.MaterialTypeConfig;
 import me.hsgamer.extrastorage.gui.base.ESGui;
 import me.hsgamer.extrastorage.gui.icon.Icon;
 import me.hsgamer.extrastorage.storage.StorageManager;
 import me.hsgamer.extrastorage.util.ItemUtil;
+import me.hsgamer.extrastorage.util.CustomItemDetector;
 import org.bukkit.Material;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.event.inventory.InventoryAction;
+import org.bukkit.configuration.ConfigurationSection;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 public class AddItemToStorageGui extends ESGui {
     // Instance của MaterialTypeConfig để kiểm tra các loại vật liệu
@@ -313,6 +315,57 @@ public class AddItemToStorageGui extends ESGui {
             return false;
         }
 
+        // Cho phép thêm vào kho
+        return true;
+    }
+    
+    /**
+     * Kiểm tra một ItemStack xem có được phép thêm vào kho không
+     * @param item ItemStack cần kiểm tra
+     * @return true nếu được phép, false nếu không
+     */
+    public boolean isItemStackAllowed(ItemStack item) {
+        if (item == null) {
+            return false;
+        }
+        
+        // Kiểm tra các thuộc tính Material cơ bản
+        if (!isAllowedItem(item.getType())) {
+            return false;
+        }
+        
+        // Kiểm tra xem có phải là vật phẩm tùy chỉnh không (MMOItems, ItemsAdder, etc.)
+        if (CustomItemDetector.isCustomItem(item)) {
+            // Kiểm tra MMOItems
+            if (CustomItemDetector.isMMOItem(item)) {
+                // Lấy MMOItem ID
+                String mmoItemId = CustomItemDetector.getMMOItemId(item);
+                if (mmoItemId != null) {
+                    // Tách TYPE và ID
+                    String[] parts = mmoItemId.split(":", 2);
+                    String type = parts[0];
+                    String id = parts.length > 1 ? parts[1] : "";
+                    
+                    // Kiểm tra whitelist
+                    boolean allowed = materialTypeConfig.isCustomItemWhitelisted(id, "mmoitems") || 
+                                     materialTypeConfig.isCustomItemWhitelisted(type + ":" + id, "mmoitems") ||
+                                     materialTypeConfig.isCustomItemWhitelisted(type + ":*", "mmoitems");
+                    
+                    Debug.log("[AddItemToStorageGui] MMOItem check: " + mmoItemId + " - Allowed: " + allowed);
+                    return allowed;
+                }
+                
+                // Nếu không lấy được ID, không cho phép
+                Debug.log("[AddItemToStorageGui] Không xác định được ID của MMOItem, từ chối");
+                return false;
+            }
+            
+            // Kiểm tra các loại vật phẩm tùy chỉnh khác
+            // Hiện tại từ chối tất cả các loại khác
+            Debug.log("[AddItemToStorageGui] Từ chối vật phẩm tùy chỉnh không được nhận dạng: " + item.getType());
+            return false;
+        }
+        
         return true;
     }
 
@@ -337,60 +390,12 @@ public class AddItemToStorageGui extends ESGui {
     }
 
     /**
-     * Tải các icon và layout cho GUI
+     * Tải các icon và layout cho GUI từ file cấu hình YAML
      */
     private void load() {
-        // Tạo ItemStack cho nút Xác nhận
-        ItemStack confirmButton = new ItemStack(Material.LIME_WOOL);
-        ItemMeta confirmMeta = confirmButton.getItemMeta();
-        confirmMeta.setDisplayName("§a§lXác nhận");
-        List<String> confirmLore = new ArrayList<>();
-        confirmLore.add("§7Nhấn để thêm vật phẩm vào kho.");
-        confirmLore.add("");
-        confirmLore.add("§fVật phẩm sẽ được thêm vào kho của bạn");
-        confirmLore.add("§fvà không thể lấy ra được nữa.");
-        confirmMeta.setLore(confirmLore);
-        confirmButton.setItemMeta(confirmMeta);
-
-        // Tạo ItemStack cho nút Huỷ bỏ
-        ItemStack cancelButton = new ItemStack(Material.RED_WOOL);
-        ItemMeta cancelMeta = cancelButton.getItemMeta();
-        cancelMeta.setDisplayName("§c§lHuỷ bỏ");
-        List<String> cancelLore = new ArrayList<>();
-        cancelLore.add("§7Nhấn để huỷ bỏ thao tác thêm vật phẩm.");
-        cancelLore.add("");
-        cancelLore.add("§fVật phẩm sẽ được trả lại vào túi đồ của bạn.");
-        cancelMeta.setLore(cancelLore);
-        cancelButton.setItemMeta(cancelMeta);
-
-        // Tạo ItemStack cho viền giao diện
-        ItemStack border = new ItemStack(Material.BLACK_STAINED_GLASS_PANE);
-        ItemMeta borderMeta = border.getItemMeta();
-        borderMeta.setDisplayName("§f ");
-        border.setItemMeta(borderMeta);
-
-        // Tạo ItemStack cho sách hướng dẫn
-        ItemStack guideBook = new ItemStack(Material.WRITTEN_BOOK);
-        ItemMeta guideMeta = guideBook.getItemMeta();
-        guideMeta.setDisplayName("§e§lHướng dẫn");
-        List<String> guideLore = new ArrayList<>();
-        guideLore.add("§7Hướng dẫn sử dụng GUI thêm vật phẩm vào kho.");
-        guideLore.add("");
-        guideLore.add("§f1. Đặt vật phẩm vào ô trống ở giữa");
-        guideLore.add("§f   bằng cách SHIFT+CLICK hoặc kéo thả.");
-        guideLore.add("§f2. Nhấn nút Xác nhận để thêm vào kho.");
-        guideLore.add("§f3. Nhấn nút Huỷ bỏ để hủy thao tác.");
-        guideLore.add("");
-        guideLore.add("§c⚠ Lưu ý: Vật phẩm đã thêm vào kho sẽ");
-        guideLore.add("§c  không thể lấy ra được nữa!");
-        guideMeta.setLore(guideLore);
-        guideBook.setItemMeta(guideMeta);
-
-        // Cài đặt các slot và logic cho từng icon
-
-        // Nút xác nhận
-        Icon confirmIcon = new Icon(confirmButton)
-                .setSlots(11)
+        // Đọc các phần tử từ config
+        // Nút xác nhận từ ConfirmItem
+        Icon confirmIcon = this.createIconFromConfig(null, "ConfirmItem")
                 .handleClick(event -> {
                     Player p = event.getPlayer();
                     // Lấy item trong slot 13
@@ -405,10 +410,12 @@ public class AddItemToStorageGui extends ESGui {
 
                     // Kiểm tra một lần nữa xem vật phẩm có được phép lưu trữ không
                     Material material = item.getType();
-                    if (!isAllowedItem(material)) {
+                    if (!isItemStackAllowed(item)) {
                         p.sendMessage("§c[ExtraStorage] §fVật phẩm này không được phép lưu trữ trong kho!");
                         if (materialTypeConfig.isBlacklisted(material)) {
                             p.sendMessage("§c[ExtraStorage] Vật phẩm này nằm trong danh sách vật phẩm bị cấm.");
+                        } else if (me.hsgamer.extrastorage.util.CustomItemDetector.isCustomItem(item)) {
+                            p.sendMessage("§c[ExtraStorage] Không thể thêm vật phẩm tùy chỉnh (MMOItems, ItemsAdder...) vào kho.");
                         }
                         p.playSound(p.getLocation(), org.bukkit.Sound.ENTITY_VILLAGER_NO, 1.0f, 1.0f);
                         return;
@@ -427,9 +434,8 @@ public class AddItemToStorageGui extends ESGui {
                     this.getInventory().setItem(13, null);
                 });
 
-        // Nút hủy bỏ
-        Icon cancelIcon = new Icon(cancelButton)
-                .setSlots(15)
+        // Nút hủy bỏ từ CancelItem
+        Icon cancelIcon = this.createIconFromConfig(null, "CancelItem")
                 .handleClick(event -> {
                     Player p = event.getPlayer();
                     // Lấy item trong slot 13
@@ -457,20 +463,8 @@ public class AddItemToStorageGui extends ESGui {
                     p.closeInventory();
                 });
 
-        // Cài đặt các slot biên giới (kính đen)
-        List<Integer> borderSlots = new ArrayList<>();
-        for (int i = 0; i < 27; i++) {
-            // Thêm tất cả các slot vào danh sách ngoại trừ 4, 11, 13, và 15
-            if (i != 4 && i != 11 && i != 13 && i != 15) {
-                borderSlots.add(i);
-            }
-        }
-
-        Icon borderIcon = new Icon(border).setSlots(borderSlots.stream().mapToInt(Integer::intValue).toArray());
-
-        // Cài đặt sách hướng dẫn
-        Icon guideIcon = new Icon(guideBook)
-                .setSlots(4)
+        // Sách hướng dẫn từ InfoItem
+        Icon guideIcon = this.createIconFromConfig(null, "InfoItem")
                 .handleClick(event -> {
                     Player p = event.getPlayer();
                     // Hiển thị hướng dẫn khi người chơi click vào sách
@@ -484,10 +478,166 @@ public class AddItemToStorageGui extends ESGui {
                     p.sendMessage("");
                 });
 
-        // Thêm tất cả các icon vào GUI
+        // Tạo các item trang trí từ phần DecorateItems
+        ConfigurationSection decorSection = this.getConfig().getConfigurationSection("DecorateItems");
+        if (decorSection != null) {
+            for (String key : decorSection.getKeys(false)) {
+                Icon decorIcon = this.createIconFromDecorSection(key, null);
+                this.addIcon(decorIcon);
+            }
+        }
+
+        // Thêm tất cả các icon chính vào GUI
         this.addIcon(confirmIcon);
         this.addIcon(cancelIcon);
-        this.addIcon(borderIcon);
         this.addIcon(guideIcon);
+    }
+
+    /**
+     * Tạo Icon từ phần cấu hình trong file YAML
+     * 
+     * @param config     ConfigurationSection chứa toàn bộ cấu hình
+     * @param sectionKey Khóa của phần cấu hình (ví dụ: "ConfirmItem")
+     * @return Icon được tạo từ cấu hình
+     */
+    private Icon createIconFromConfig(Map<String, Object> config, String sectionKey) {
+        ConfigurationSection itemConfig = this.getConfig().getConfigurationSection(sectionKey);
+        if (itemConfig == null) {
+            Debug.log("[GUI] Missing config section: " + sectionKey);
+            // Trả về icon mặc định nếu không tìm thấy cấu hình
+            ItemStack defaultItem = new ItemStack(Material.BARRIER);
+            ItemMeta meta = defaultItem.getItemMeta();
+            meta.setDisplayName("§cMissing Config: " + sectionKey);
+            defaultItem.setItemMeta(meta);
+            return new Icon(defaultItem);
+        }
+
+        // Lấy thông tin vật liệu
+        String materialName = itemConfig.getString("Material");
+        Material material = Material.valueOf(materialName);
+
+        // Tạo ItemStack
+        ItemStack itemStack = new ItemStack(material);
+        ItemMeta meta = itemStack.getItemMeta();
+
+        // Đặt tên hiển thị nếu có
+        if (itemConfig.contains("Name")) {
+            String name = itemConfig.getString("Name");
+            meta.setDisplayName(name.replace("&", "§"));
+        }
+
+        // Đặt lore nếu có
+        if (itemConfig.contains("Lore")) {
+            List<String> lore = new ArrayList<>();
+            List<String> configLore = itemConfig.getStringList("Lore");
+            for (String line : configLore) {
+                lore.add(line.replace("&", "§"));
+            }
+            meta.setLore(lore);
+        }
+
+        itemStack.setItemMeta(meta);
+
+        // Tạo Icon với ItemStack
+        Icon icon = new Icon(itemStack);
+
+        // Đặt slots nếu có
+        if (itemConfig.contains("Slot")) {
+            int slot = itemConfig.getInt("Slot");
+            icon.setSlots(slot);
+        } else if (itemConfig.contains("Slots")) {
+            String slotsStr = itemConfig.getString("Slots");
+            icon.setSlots(this.parseSlots(slotsStr));
+        }
+
+        return icon;
+    }
+
+    /**
+     * Tạo Icon từ phần Decorate trong file YAML
+     * 
+     * @param key         Tên của item trang trí
+     * @param sectionPath Đường dẫn đến phần cấu hình của item trang trí
+     * @return Icon được tạo từ cấu hình
+     */
+    private Icon createIconFromDecorSection(String key, Map<String, Object> decorValue) {
+        ConfigurationSection decorConfig = this.getConfig().getConfigurationSection("DecorateItems." + key);
+        if (decorConfig == null) {
+            Debug.log("[GUI] Missing decor config section: " + key);
+            // Trả về icon mặc định nếu không tìm thấy cấu hình
+            ItemStack defaultItem = new ItemStack(Material.BARRIER);
+            ItemMeta meta = defaultItem.getItemMeta();
+            meta.setDisplayName("§cMissing Decor Config: " + key);
+            defaultItem.setItemMeta(meta);
+            return new Icon(defaultItem);
+        }
+
+        // Lấy thông tin vật liệu
+        String materialName = decorConfig.getString("Material");
+        Material material = Material.valueOf(materialName);
+
+        // Tạo ItemStack
+        ItemStack itemStack = new ItemStack(material);
+        ItemMeta meta = itemStack.getItemMeta();
+
+        // Đặt tên hiển thị nếu có
+        if (decorConfig.contains("Name")) {
+            String name = decorConfig.getString("Name");
+            meta.setDisplayName(name.replace("&", "§"));
+        }
+
+        // Đặt lore nếu có
+        if (decorConfig.contains("Lore")) {
+            List<String> lore = new ArrayList<>();
+            List<String> configLore = decorConfig.getStringList("Lore");
+            for (String line : configLore) {
+                lore.add(line.replace("&", "§"));
+            }
+            meta.setLore(lore);
+        }
+
+        itemStack.setItemMeta(meta);
+
+        // Tạo Icon với ItemStack
+        Icon icon = new Icon(itemStack);
+
+        // Đặt slots
+        if (decorConfig.contains("Slots")) {
+            String slotsStr = decorConfig.getString("Slots");
+            icon.setSlots(this.parseSlots(slotsStr));
+        }
+
+        return icon;
+    }
+
+    /**
+     * Chuyển đổi chuỗi định dạng slots (như "0-4,6-11,14-15,17-26") thành mảng số
+     * nguyên
+     * 
+     * @param slotsStr Chuỗi định dạng slots
+     * @return Mảng số nguyên chứa các slot
+     */
+    private int[] parseSlots(String slotsStr) {
+        List<Integer> slots = new ArrayList<>();
+
+        // Tách các phần cách nhau bởi dấu phẩy
+        String[] parts = slotsStr.split(",");
+        for (String part : parts) {
+            if (part.contains("-")) {
+                // Xử lý phạm vi (ví dụ: "0-4")
+                String[] range = part.split("-");
+                int start = Integer.parseInt(range[0]);
+                int end = Integer.parseInt(range[1]);
+                for (int i = start; i <= end; i++) {
+                    slots.add(i);
+                }
+            } else {
+                // Xử lý số đơn lẻ
+                slots.add(Integer.parseInt(part));
+            }
+        }
+
+        // Chuyển List<Integer> thành int[]
+        return slots.stream().mapToInt(Integer::intValue).toArray();
     }
 }

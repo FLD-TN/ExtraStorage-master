@@ -195,11 +195,57 @@ public class StubStorage implements Storage {
 
     @Override
     public boolean canStore(Object key) {
-        if (!user.entry.getValue().status)
+        // Nếu status là false (kho bị tắt), không nhận bất kỳ vật phẩm nào
+        if (!user.entry.getValue().status) {
+            Debug.log("[canStore] Storage status is disabled, can't store items");
             return false;
+        }
+        
+        // Chuyển đổi key thành chuỗi hợp lệ
         String validKey = ItemUtil.toMaterialKey(key);
+        if (validKey == null || validKey.isEmpty() || validKey.equals(Constants.INVALID)) {
+            Debug.log("[canStore] Invalid key: " + key);
+            return false;
+        }
+        
+        // Trường hợp 1: Item đã có sẵn trong kho và được filter
         ItemImpl item = user.entry.getValue().items.get(validKey);
-        return (item != null) && item.filtered;
+        if (item != null) {
+            // Kiểm tra hai điều kiện: đã filtered hoặc đã thêm vào kho (số lượng > 0)
+            if (item.filtered) {
+                Debug.log("[canStore] Item is filtered in storage: " + validKey);
+                return true;
+            }
+            
+            if (item.quantity > 0) {
+                Debug.log("[canStore] Item found in storage with quantity " + item.quantity + ": " + validKey);
+                return true;
+            }
+        }
+        
+        // Trường hợp 2: Nếu không tìm thấy item chính xác, tìm theo key chuẩn hóa hoặc phần base
+        String normalizedKey = normalizeKey(validKey);
+        String baseKey = validKey.split(":", 2)[0].toUpperCase(Locale.ROOT);
+        
+        // Tìm kiếm trong các mục đã có trong kho
+        for (Map.Entry<String, ItemImpl> entry : user.entry.getValue().items.entrySet()) {
+            String entryKey = entry.getKey();
+            String entryNormalized = normalizeKey(entryKey);
+            
+            // So sánh theo nhiều cách khác nhau
+            boolean keyMatch = entryNormalized.equals(normalizedKey) || 
+                               entryKey.startsWith(baseKey) || 
+                               entryKey.equalsIgnoreCase(validKey);
+                               
+            // Nếu key khớp và item đã filtered hoặc có số lượng > 0
+            if (keyMatch && (entry.getValue().filtered || entry.getValue().quantity > 0)) {
+                Debug.log("[canStore] Found matching item: " + entry.getKey() + " for key: " + validKey);
+                return true;
+            }
+        }
+        
+        // Không tìm thấy mục phù hợp
+        return false;
     }
 
     @Override

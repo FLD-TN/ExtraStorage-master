@@ -9,6 +9,9 @@ import me.hsgamer.extrastorage.configs.*;
 import me.hsgamer.extrastorage.hooks.placeholder.ESPlaceholder;
 import me.hsgamer.extrastorage.listeners.*;
 import me.hsgamer.extrastorage.metrics.PluginMetrics;
+import me.hsgamer.extrastorage.listeners.PickupListener;
+import me.hsgamer.extrastorage.listeners.ItemSpawnListener;
+import me.hsgamer.extrastorage.listeners.PlayerDropListener;
 import org.bukkit.Bukkit;
 import org.bukkit.plugin.java.JavaPlugin;
 
@@ -148,6 +151,15 @@ public final class ExtraStorage extends JavaPlugin {
         getServer().getPluginManager().registerEvents(new FilterListener(this), this);
         getServer().getPluginManager().registerEvents(new InventoryListener(this), this);
         getServer().getPluginManager().registerEvents(new PlayerListener(this), this);
+        
+        // Đăng ký PickupListener riêng để xử lý nhặt vật phẩm vào kho
+        new PickupListener(this);
+        
+        // Đăng ký PlayerDropListener để xử lý vật phẩm drop ra từ người chơi
+        getServer().getPluginManager().registerEvents(new PlayerDropListener(this), this);
+        
+        // Đăng ký ItemSpawnListener để xử lý các vật phẩm spawn trong thế giới
+        getServer().getPluginManager().registerEvents(new ItemSpawnListener(this), this);
     }
 
     private void scheduleCleanupTask() {
