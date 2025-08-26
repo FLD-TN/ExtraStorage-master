@@ -4,6 +4,7 @@ import me.hsgamer.extrastorage.Debug;
 import me.hsgamer.extrastorage.ExtraStorage;
 import me.hsgamer.extrastorage.api.item.Item;
 import me.hsgamer.extrastorage.api.storage.Storage;
+import me.hsgamer.extrastorage.configs.MaterialTypeConfig;
 import me.hsgamer.extrastorage.data.Constants;
 import me.hsgamer.extrastorage.data.user.ItemImpl;
 import me.hsgamer.extrastorage.util.Digital;
@@ -195,56 +196,31 @@ public class StubStorage implements Storage {
 
     @Override
     public boolean canStore(Object key) {
-        // Nếu status là false (kho bị tắt), không nhận bất kỳ vật phẩm nào
+        // 1. Luôn trả về false nếu kho đang tắt
         if (!user.entry.getValue().status) {
-            Debug.log("[canStore] Storage status is disabled, can't store items");
             return false;
         }
-        
-        // Chuyển đổi key thành chuỗi hợp lệ
+
+        // 2. Chuyển đổi item thành một "key" định danh hợp lệ
         String validKey = ItemUtil.toMaterialKey(key);
-        if (validKey == null || validKey.isEmpty() || validKey.equals(Constants.INVALID)) {
-            Debug.log("[canStore] Invalid key: " + key);
-            return false;
+        if (validKey == null || validKey.equals(Constants.INVALID)) {
+            return false; // Bỏ qua nếu là vật phẩm không hợp lệ
         }
-        
-        // Trường hợp 1: Item đã có sẵn trong kho và được filter
+
+        // 3. Lấy thông tin vật phẩm trực tiếp từ dữ liệu của người dùng
         ItemImpl item = user.entry.getValue().items.get(validKey);
+
+        // 4. Kiểm tra điều kiện
         if (item != null) {
-            // Kiểm tra hai điều kiện: đã filtered hoặc đã thêm vào kho (số lượng > 0)
-            if (item.filtered) {
-                Debug.log("[canStore] Item is filtered in storage: " + validKey);
-                return true;
-            }
-            
-            if (item.quantity > 0) {
-                Debug.log("[canStore] Item found in storage with quantity " + item.quantity + ": " + validKey);
-                return true;
-            }
+            // Vật phẩm được phép vào kho NẾU:
+            // a) Nó đã được bạn thêm vào bộ lọc (filtered = true)
+            // b) Hoặc nó là vật phẩm không lọc nhưng vẫn còn số lượng trong kho (quantity >
+            // 0)
+            return item.filtered || item.quantity > 0;
         }
-        
-        // Trường hợp 2: Nếu không tìm thấy item chính xác, tìm theo key chuẩn hóa hoặc phần base
-        String normalizedKey = normalizeKey(validKey);
-        String baseKey = validKey.split(":", 2)[0].toUpperCase(Locale.ROOT);
-        
-        // Tìm kiếm trong các mục đã có trong kho
-        for (Map.Entry<String, ItemImpl> entry : user.entry.getValue().items.entrySet()) {
-            String entryKey = entry.getKey();
-            String entryNormalized = normalizeKey(entryKey);
-            
-            // So sánh theo nhiều cách khác nhau
-            boolean keyMatch = entryNormalized.equals(normalizedKey) || 
-                               entryKey.startsWith(baseKey) || 
-                               entryKey.equalsIgnoreCase(validKey);
-                               
-            // Nếu key khớp và item đã filtered hoặc có số lượng > 0
-            if (keyMatch && (entry.getValue().filtered || entry.getValue().quantity > 0)) {
-                Debug.log("[canStore] Found matching item: " + entry.getKey() + " for key: " + validKey);
-                return true;
-            }
-        }
-        
-        // Không tìm thấy mục phù hợp
+
+        // 5. Nếu vật phẩm không hề có trong danh sách của bạn, không tự động cho vào
+        // kho
         return false;
     }
 
@@ -338,45 +314,72 @@ public class StubStorage implements Storage {
         return Optional.empty();
     }
 
-    // Phương thức chuẩn hóa key để so sánh - cải thiện để xử lý nhiều định dạng
-    // khác nhau
+    /**
+     * Chuẩn hóa key để so sánh - phiên bản cải tiến để xử lý nhiều định dạng và
+     * tình huống
+     * Phương pháp này giúp tăng tính tương thích giữa các phiên bản và plugin khác
+     * nhau
+     *
+     * @param key Khóa cần chuẩn hóa
+     * @return Khóa đã chuẩn hóa
+     */
     private String normalizeKey(String key) {
+        // Xử lý null và rỗng
         if (key == null || key.isEmpty()) {
             return "";
         }
 
-        // Loại bỏ hậu tố ":0" nếu có
-        if (key.endsWith(":0")) {
-            key = key.substring(0, key.length() - 2);
+        try {
+            // Xử lý các ký tự không cần thiết và khoảng trắng
+            key = key.trim();
+
+            // Loại bỏ hậu tố ":0" vì nó không có ý nghĩa phân biệt
+            if (key.endsWith(":0")) {
+                key = key.substring(0, key.length() - 2);
+            }
+
+            // Tách thành các phần để xử lý riêng
+            String[] parts = key.split(":", 2);
+            String type = parts[0].toUpperCase(Locale.ROOT);
+
+            if (parts.length == 1) {
+                return type; // Chỉ trả về phần material đã viết hoa
+            }
+
+            // Xử lý các plugin item đặc biệt
+            // Mở rộng danh sách plugin được hỗ trợ
+            switch (type) {
+                case "IA":
+                    return "ITEMSADDER:" + parts[1].toLowerCase();
+                case "ITEMSADDER":
+                    return "ITEMSADDER:" + parts[1].toLowerCase();
+                case "ORX":
+                    return "ORAXEN:" + parts[1].toLowerCase();
+                case "ORAXEN":
+                    return "ORAXEN:" + parts[1].toLowerCase();
+                case "NEXO":
+                    return "NEXO:" + parts[1].toLowerCase();
+                case "MMOITEMS":
+                case "MI":
+                    return "MMOITEMS:" + parts[1].toLowerCase();
+                case "SLIMEFUN":
+                case "SF":
+                    return "SLIMEFUN:" + parts[1].toLowerCase();
+                case "MYTHICMOBS":
+                case "MM":
+                    return "MYTHICMOBS:" + parts[1].toLowerCase();
+                default:
+                    // Với các item thông thường có data value, loại bỏ data nếu là 0
+                    if (parts[1].equals("0")) {
+                        return type;
+                    }
+                    return type + ":" + parts[1];
+            }
+        } catch (Exception e) {
+            // Nếu có lỗi, trả về key sau khi viết hoa để vẫn có thể xử lý
+            Debug.log("[normalizeKey] Error processing key: " + key + " - " + e.getMessage());
+            return key.toUpperCase(Locale.ROOT);
         }
-
-        // Tách thành các phần để xử lý riêng
-        String[] parts = key.split(":", 2);
-        String type = parts[0].toUpperCase(Locale.ROOT);
-
-        if (parts.length == 1) {
-            return type; // Chỉ trả về phần material đã viết hoa
-        }
-
-        // Xử lý các plugin item đặc biệt
-        if (type.equals("ITEMSADDER") || type.equals("IA") ||
-                type.equals("ORAXEN") || type.equals("ORX") ||
-                type.equals("NEXO")) {
-            // Chuẩn hóa tiền tố plugin
-            if (type.equals("IA"))
-                type = "ITEMSADDER";
-            if (type.equals("ORX"))
-                type = "ORAXEN";
-
-            return type + ":" + parts[1];
-        }
-
-        // Với các item thông thường có data value, loại bỏ data nếu là 0
-        if (parts[1].equals("0")) {
-            return type;
-        }
-
-        return type + ":" + parts[1];
     }
 
     @Override

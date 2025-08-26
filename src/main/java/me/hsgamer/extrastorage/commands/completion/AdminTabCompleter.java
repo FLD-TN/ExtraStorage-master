@@ -23,81 +23,74 @@ public class AdminTabCompleter implements TabCompleter {
 
     @Override
     public List<String> onTabComplete(CommandSender sender, Command command, String alias, String[] args) {
+        String input = args[args.length - 1].toLowerCase();
+
         if (args.length == 1) {
-            return Arrays.asList("help", "open", "space", "addspace", "add", "subtract", "set", "reset", "whitelist",
-                    "reload", "filtertoggle");
-        } else if (args.length == 2) {
-            switch (args[0].toLowerCase()) {
+            return Arrays
+                    .asList("help", "open", "space", "addspace", "add", "addrnd", "subtract", "set", "reset",
+                            "whitelist", "reload", "filtertoggle", "blockto", "oreto")
+                    .stream().filter(s -> s.startsWith(input)).collect(Collectors.toList());
+        }
+
+        String subCommand = args[0].toLowerCase();
+        if (args.length == 2) {
+            switch (subCommand) {
                 case "open":
                 case "space":
-                    // Các lệnh chỉ nhận người chơi
-                    List<String> players = new ArrayList<>();
-                    players.addAll(
-                            Bukkit.getOnlinePlayers().stream().map(p -> p.getName()).collect(Collectors.toList()));
-                    return players;
-                case "addspace":
-                    // /esadmin addspace <amount> [player]
-                    List<String> amounts = new ArrayList<>();
-                    amounts.add("10");
-                    amounts.add("50");
-                    amounts.add("100");
-                    amounts.add("500");
-                    amounts.add("1000");
-                    return amounts;
+                    return Bukkit.getOnlinePlayers().stream().map(p -> p.getName())
+                            .filter(s -> s.toLowerCase().startsWith(input)).collect(Collectors.toList());
                 case "add":
                 case "subtract":
                 case "set":
-                    // /esadmin add/subtract/set <material-key> <amount> [player]
-                    // Trả về danh sách material-keys
+                case "reset":
+                case "addrnd":
+                case "blockto":
+                case "oreto":
                     List<String> materials = new ArrayList<>(setting.getMaterialTypes().keySet());
-                    return materials;
-                case "reset":
-                    // /esadmin reset <material-key|*> [player]
-                    List<String> resetMaterials = new ArrayList<>(setting.getMaterialTypes().keySet());
-                    resetMaterials.add("*");
-                    return resetMaterials;
+                    if ("reset".equals(subCommand) || "addrnd".equals(subCommand)) {
+                        materials.add("*");
+                    }
+                    return materials.stream().filter(s -> s.toLowerCase().startsWith(input))
+                            .collect(Collectors.toList());
                 case "whitelist":
-                    return Arrays.asList("add", "remove", "clear");
-                default:
-                    return new ArrayList<>();
-            }
-        } else if (args.length == 3) {
-            switch (args[0].toLowerCase()) {
-                case "add":
-                case "subtract":
-                case "set":
-                    // Gợi ý amount cho add/subtract/set
-                    List<String> amounts = new ArrayList<>();
-                    amounts.add("1");
-                    amounts.add("5");
-                    amounts.add("10");
-                    amounts.add("64");
-                    amounts.add("100");
-                    return amounts;
-                case "reset":
-                case "addspace":
-                    // Gợi ý player cho reset và addspace
-                    List<String> players = new ArrayList<>();
-                    players.addAll(
-                            Bukkit.getOnlinePlayers().stream().map(p -> p.getName()).collect(Collectors.toList()));
-                    return players;
-                default:
-                    return new ArrayList<>();
-            }
-        } else if (args.length == 4) {
-            switch (args[0].toLowerCase()) {
-                case "add":
-                case "subtract":
-                case "set":
-                    // Gợi ý player cho tham số cuối cùng của add/subtract/set
-                    List<String> players = new ArrayList<>();
-                    players.addAll(
-                            Bukkit.getOnlinePlayers().stream().map(p -> p.getName()).collect(Collectors.toList()));
-                    return players;
+                    return Arrays.asList("add", "remove", "clear").stream().filter(s -> s.startsWith(input))
+                            .collect(Collectors.toList());
                 default:
                     return new ArrayList<>();
             }
         }
+
+        if (args.length == 3) {
+            switch (subCommand) {
+                case "addspace":
+                case "reset":
+                case "addrnd":
+                case "blockto":
+                case "oreto":
+                    return Bukkit.getOnlinePlayers().stream().map(p -> p.getName())
+                            .filter(s -> s.toLowerCase().startsWith(input)).collect(Collectors.toList());
+                case "add":
+                case "subtract":
+                case "set":
+                    return Arrays.asList("1", "10", "64", "100", "1000").stream().filter(s -> s.startsWith(input))
+                            .collect(Collectors.toList());
+                default:
+                    return new ArrayList<>();
+            }
+        }
+
+        if (args.length == 4) {
+            switch (subCommand) {
+                case "add":
+                case "subtract":
+                case "set":
+                    return Bukkit.getOnlinePlayers().stream().map(p -> p.getName())
+                            .filter(s -> s.toLowerCase().startsWith(input)).collect(Collectors.toList());
+                default:
+                    return new ArrayList<>();
+            }
+        }
+
         return new ArrayList<>();
     }
 }

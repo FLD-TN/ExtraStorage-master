@@ -101,7 +101,6 @@ WARN:
   confirm-unfilter: '{prefix}§6Nhấp lại để xác nhận xóa khỏi bộ lọc!'
   Stored:
     ActionBar: '§f+{amount} §r{item} §7| §e/kho §ađể mở kho chứa'
-    Chat: '{prefix}§aĐã thêm §e{amount}x §r{item} §avào kho chứa!'
     Filtered: '{prefix}§aĐã tự động thêm §e{amount}x §r{item} §avào kho (item đã lọc)!'
   StorageIsFull: §c§lKho chứa của bạn đã đầy!
   StorageAlmostFull: §e§lKho chứa của bạn gần đầy! ({percent}%)
@@ -125,11 +124,9 @@ FAIL:
   filter-error: '{prefix}§c§lCó lỗi khi thêm vào bộ lọc!'
   invalid-filter: '{prefix}§c§lBộ lọc không hợp lệ!'
   filter-locked: '{prefix}§c§lBạn không có quyền sử dụng bộ lọc!'
-  not-enough-item: '{prefix}§cBạn (hoặc đối tác của bạn) không có đủ §r{item} §cđể
-    làm điều đó!'
+  not-enough-item: '{prefix}§cBạn (hoặc đối tác của bạn) không có đủ §r{item} §cđể làm điều đó!'
   not-enough-item-in-inventory: '{prefix}§cBạn không có đủ §r{item} §ctrong hành trang!'
-  item-not-filtered: '{prefix}§cBạn không thể chuyển những vật phẩm không có trong
-    bộ lọc vào kho chứa!'
+  item-not-filtered: '{prefix}§cBạn không thể chuyển những vật phẩm không có trong bộ lọc vào kho chứa!'
   already-partner: '{prefix}§cNgười chơi đó đã là đối tác của bạn rồi!'
   not-partner: '{prefix}§cNgười chơi đó không phải là đối tác của bạn!'
   partners-list-empty: '{prefix}§cDanh sách đối tác của bạn trống!'
@@ -139,3 +136,9 @@ FAIL:
   item-already-whitelisted: '{prefix}§cVật phẩm đó đã có trong danh sách trắng!'
   request-already-sent: '{prefix}§cBạn đã gửi yêu cầu kết bạn tới người này rồi.'
   no-request: '{prefix}§cKhông có yêu cầu kết bạn nào từ người này.'
+  invalid-material: '{prefix}§c§lVật phẩm §e{value} §c§lkhông hợp lệ!'
+  not-convertible-to-block: '{prefix}§c§lVật phẩm §e{item} §c§lkhông thể chuyển đổi thành khối!'
+  not-convertible-to-ore: '{prefix}§c§lVật phẩm §e{item} §c§lkhông thể chuyển đổi thành khoáng sản!'
+  not-enough-to-convert: '{prefix}§cNgười chơi §e{player} §ckhông có đủ §r{item} §c(hiện có: {quantity}) để chuyển đổi!'
+  add-random-failed: '{prefix}§cThêm số lượng ngẫu nhiên thất bại! Kho có thể đã đầy.'
+

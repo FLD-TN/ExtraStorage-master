@@ -13,7 +13,7 @@ ConfirmItem:
     - '&7Nhấn để thêm vật phẩm vào kho'
   Slot: 12
 
-CancelItem:
+CancelItem:   
   Material: 'RED_WOOL'
   Name: '&c&lHuỷ bỏ'
   Lore:

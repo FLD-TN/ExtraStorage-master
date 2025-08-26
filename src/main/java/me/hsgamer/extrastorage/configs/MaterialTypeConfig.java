@@ -106,11 +106,11 @@ public class MaterialTypeConfig {
         oreMaterialKeywords = config.getStringList("ore-materials");
         cropMaterialKeywords = config.getStringList("crop-materials");
         mobDropMaterialKeywords = config.getStringList("mobdrop-materials");
-        
+
         // Tải danh sách trắng cho các vật phẩm tùy chỉnh
         mmoItemsWhitelist = config.getStringList("mmoitems-whitelist");
         customItemsWhitelist = config.getStringList("custom-items-whitelist");
-        
+
         if (mmoItemsWhitelist == null) {
             mmoItemsWhitelist = new java.util.ArrayList<>();
         }
@@ -211,7 +211,8 @@ public class MaterialTypeConfig {
     }
 
     /**
-     * Kiểm tra xem vật liệu có được phép lưu trữ không
+     * Kiểm tra xem vật liệu có được phép lưu trữ không dựa trên phương pháp
+     * whitelist
      * 
      * @param material Loại vật liệu cần kiểm tra
      * @return true nếu được phép lưu trữ
@@ -222,29 +223,33 @@ public class MaterialTypeConfig {
             return false;
         }
 
-        // Kiểm tra xem vật phẩm có thuộc một trong các loại cho phép hay không
-        return isBlock(material) || isOre(material) || isCrop(material) || isMobDrop(material);
+        // Sử dụng phương pháp whitelist - vật phẩm CHỈ được phép nếu thuộc một trong
+        // các loại được cho phép
+        return isOre(material) || isCrop(material) || isMobDrop(material);
     }
-    
+
     /**
      * Lấy danh sách whitelist cho MMOItems
+     * 
      * @return List các MMOItems được cho phép
      */
     public List<String> getMMOItemsWhitelist() {
         return new java.util.ArrayList<>(mmoItemsWhitelist);
     }
-    
+
     /**
      * Lấy danh sách whitelist cho các vật phẩm tùy chỉnh khác
+     * 
      * @return List các vật phẩm tùy chỉnh được cho phép
      */
     public List<String> getCustomItemsWhitelist() {
         return new java.util.ArrayList<>(customItemsWhitelist);
     }
-    
+
     /**
      * Kiểm tra xem vật phẩm tùy chỉnh có được cho phép không
-     * @param id ID của vật phẩm tùy chỉnh
+     * 
+     * @param id   ID của vật phẩm tùy chỉnh
      * @param type Loại vật phẩm (mmoitems, itemsadder, etc.)
      * @return true nếu vật phẩm được cho phép
      */
@@ -252,14 +257,16 @@ public class MaterialTypeConfig {
         if (id == null || id.isEmpty() || type == null || type.isEmpty()) {
             return false;
         }
-        
+
         String fullId = type + ":" + id;
-        
+
         // Kiểm tra theo loại
         if ("mmoitems".equalsIgnoreCase(type)) {
-            return mmoItemsWhitelist.contains(id) || mmoItemsWhitelist.contains(fullId) || mmoItemsWhitelist.contains("*");
+            return mmoItemsWhitelist.contains(id) || mmoItemsWhitelist.contains(fullId)
+                    || mmoItemsWhitelist.contains("*");
         } else {
-            return customItemsWhitelist.contains(id) || customItemsWhitelist.contains(fullId) || customItemsWhitelist.contains("*");
+            return customItemsWhitelist.contains(id) || customItemsWhitelist.contains(fullId)
+                    || customItemsWhitelist.contains("*");
         }
     }
 }

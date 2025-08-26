@@ -14,97 +14,94 @@ import me.hsgamer.extrastorage.util.Utils;
 import org.bukkit.Bukkit;
 import org.bukkit.OfflinePlayer;
 import org.bukkit.entity.Player;
-
 import java.util.Optional;
 
 @Command(value = "subtract", usage = "/{label} subtract <material-key> <amount> [player]", permission = Constants.ADMIN_SUBTRACT_PERMISSION, minArgs = 2)
-public final class SubtractCmd
-        extends CommandListener {
+public final class SubtractCmd extends CommandListener {
 
     private final Setting setting;
-    private final String QUANTITY_REGEX, ITEM_REGEX, PLAYER_REGEX;
+    private final String QUANTITY_REGEX, ITEM_REGEX, PLAYER_REGEX, VALUE_REGEX;
 
     public SubtractCmd() {
         this.setting = instance.getSetting();
-
         this.QUANTITY_REGEX = Utils.getRegex("quantity");
         this.ITEM_REGEX = Utils.getRegex("item");
         this.PLAYER_REGEX = Utils.getRegex("player");
+        this.VALUE_REGEX = Utils.getRegex("value");
     }
 
     @Override
     public void execute(CommandContext context) {
-        String args0 = context.getArgs(0), args1 = context.getArgs(1);
-        int amount;
+        String args0 = context.getArgs(0);
+        String args1 = context.getArgs(1);
+        long amount;
         try {
-            amount = Digital.getBetween(1, Integer.MAX_VALUE, Integer.parseInt(args1));
+            amount = Digital.getBetween(1, Long.MAX_VALUE, Long.parseLong(args1));
         } catch (NumberFormatException ignored) {
             context.sendMessage(Message.getMessage("FAIL.not-number").replaceAll(VALUE_REGEX, args1));
             return;
         }
 
-        if (context.getArgsLength() == 2) {
-            if (!context.isPlayer()) {
-                context.sendMessage(Message.getMessage("FAIL.must-enter-player"));
+        if (context.getArgsLength() >= 3) {
+            String args2 = context.getArgs(2);
+            OfflinePlayer player = Bukkit.getOfflinePlayer(args2);
+            User user = instance.getUserManager().getUser(player);
+            if (user == null) {
+                context.sendMessage(Message.getMessage("FAIL.player-not-found"));
                 return;
             }
-            Player player = context.castToPlayer();
-            Storage storage = instance.getUserManager().getUser(player).getStorage();
-
+            Storage storage = user.getStorage();
             Optional<Item> optional = storage.getItem(args0);
             if (!optional.isPresent()) {
-                context.sendMessage(Message.getMessage("FAIL.item-not-in-storage").replaceAll(PLAYER_REGEX, player.getName()));
+                context.sendMessage(
+                        Message.getMessage("FAIL.item-not-in-storage").replaceAll(PLAYER_REGEX, player.getName()));
                 return;
             }
-
-            int current = (int) Math.min(optional.get().getQuantity(), Integer.MAX_VALUE);
+            long current = optional.get().getQuantity();
             if (current < 1) {
-                context.sendMessage(Message.getMessage("FAIL.not-enough-item").replaceAll(ITEM_REGEX, setting.getNameFormatted(args0, true)));
+                context.sendMessage(Message.getMessage("FAIL.not-enough-item").replaceAll(ITEM_REGEX,
+                        setting.getNameFormatted(args0, true)));
                 return;
             }
-
-            int subtractAmount = Math.min(amount, current);
+            long subtractAmount = Math.min(amount, current);
             storage.subtract(args0, subtractAmount);
-
-            context.sendMessage(Message.getMessage("SUCCESS.Subtract.self")
+            context.sendMessage(Message.getMessage("SUCCESS.Subtract.sender")
                     .replaceAll(QUANTITY_REGEX, Digital.formatThousands(subtractAmount))
-                    .replaceAll(ITEM_REGEX, setting.getNameFormatted(args0, true)));
+                    .replaceAll(ITEM_REGEX, setting.getNameFormatted(args0, true))
+                    .replaceAll(PLAYER_REGEX, player.getName()));
+            if (player.isOnline()) {
+                player.getPlayer().sendMessage(Message.getMessage("SUCCESS.Subtract.target")
+                        .replaceAll(QUANTITY_REGEX, Digital.formatThousands(subtractAmount))
+                        .replaceAll(ITEM_REGEX, setting.getNameFormatted(args0, true))
+                        .replaceAll(PLAYER_REGEX, context.getName()));
+            } else {
+                user.save();
+            }
             return;
         }
 
-        String args2 = context.getArgs(2);
-        OfflinePlayer player = Bukkit.getServer().getOfflinePlayer(args2);
-        User user = instance.getUserManager().getUser(player);
-        if (user == null) {
-            context.sendMessage(Message.getMessage("FAIL.player-not-found"));
+        if (!context.isPlayer()) {
+            context.sendMessage(Message.getMessage("FAIL.must-enter-player"));
             return;
         }
-        Storage storage = user.getStorage();
-
+        Player player = context.castToPlayer();
+        Storage storage = instance.getUserManager().getUser(player).getStorage();
         Optional<Item> optional = storage.getItem(args0);
         if (!optional.isPresent()) {
-            context.sendMessage(Message.getMessage("FAIL.item-not-in-storage").replaceAll(PLAYER_REGEX, player.getName()));
+            context.sendMessage(
+                    Message.getMessage("FAIL.item-not-in-storage").replaceAll(PLAYER_REGEX, player.getName()));
             return;
         }
-
-        int current = (int) Math.min(optional.get().getQuantity(), Integer.MAX_VALUE);
+        long current = optional.get().getQuantity();
         if (current < 1) {
-            context.sendMessage(Message.getMessage("FAIL.not-enough-item").replaceAll(ITEM_REGEX, setting.getNameFormatted(args0, true)));
+            context.sendMessage(Message.getMessage("FAIL.not-enough-item").replaceAll(ITEM_REGEX,
+                    setting.getNameFormatted(args0, true)));
             return;
         }
-
-        int subtractAmount = Math.min(amount, current);
+        long subtractAmount = Math.min(amount, current);
         storage.subtract(args0, subtractAmount);
-
-        context.sendMessage(Message.getMessage("SUCCESS.Subtract.sender")
+        context.sendMessage(Message.getMessage("SUCCESS.Subtract.self")
                 .replaceAll(QUANTITY_REGEX, Digital.formatThousands(subtractAmount))
-                .replaceAll(ITEM_REGEX, setting.getNameFormatted(args0, true))
-                .replaceAll(PLAYER_REGEX, player.getName()));
-        if (player.isOnline()) player.getPlayer().sendMessage(Message.getMessage("SUCCESS.Subtract.target")
-                .replaceAll(QUANTITY_REGEX, Digital.formatThousands(subtractAmount))
-                .replaceAll(ITEM_REGEX, setting.getNameFormatted(args0, true))
-                .replaceAll(PLAYER_REGEX, context.getName()));
-        else user.save();
+                .replaceAll(ITEM_REGEX, setting.getNameFormatted(args0, true)));
     }
-
 }

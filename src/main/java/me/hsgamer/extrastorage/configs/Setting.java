@@ -43,6 +43,8 @@ public final class Setting
     private List<String> blacklistWorlds, blacklist, whitelist;
     private Map<String, String> name;
 
+    private boolean allowCustomItems;
+
     public Setting(ExtraStorage plugin) {
         super(plugin, "config.yml");
     }
@@ -137,6 +139,8 @@ public final class Setting
                 .map(ItemUtil::normalizeMaterialKey)
                 .filter(key -> (!blacklist.contains(key)))
                 .collect(Collectors.toList());
+
+        this.allowCustomItems = config.getBoolean("AllowCustomItems", false);
 
         this.name = new HashMap<>();
         config.getConfigurationSection("FormatName")
@@ -295,6 +299,10 @@ public final class Setting
 
     public List<String> getWhitelist() {
         return this.whitelist;
+    }
+
+    public boolean isAllowCustomItems() {
+        return this.allowCustomItems;
     }
 
     public Map<String, String> getName() {

@@ -27,7 +27,10 @@ public final class Constants {
     public static final String ADMIN_FILTER_TOGGLE_PERMISSION = PREFIX + ".command.admin.filtertoggle";
     public static final String ADMIN_BROADCAST_PERMISSION = PREFIX + ".command.admin.broadcast";
 
+    // THÊM CÁC QUYỀN CÒN THIẾU
+    public static final String ADMIN_BLOCKTO_PERMISSION = PREFIX + ".command.admin.blockto";
+    public static final String ADMIN_ORETO_PERMISSION = PREFIX + ".command.admin.oreto";
+
     private Constants() {
     }
-
 }

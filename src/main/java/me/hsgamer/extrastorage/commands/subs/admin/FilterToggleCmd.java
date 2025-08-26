@@ -14,13 +14,14 @@ public final class FilterToggleCmd extends CommandListener {
 
     @Override
     public void execute(CommandContext context) {
-        if (context.getArgsLength() < 1) {
+        // args[0] = "filtertoggle", args[1] = true|false
+        if (context.getArgsLength() < 2) {
             context.sendMessage(Message.getMessage("FAIL.missing-args").replaceAll(USAGE_REGEX,
                     "/" + context.getLabel() + " filtertoggle <true|false>"));
             return;
         }
 
-        String arg = context.getArgs(0).toLowerCase();
+        String arg = context.getArgs(1).toLowerCase();
         boolean newState;
 
         if (arg.equals("true") || arg.equals("on") || arg.equals("enable")) {

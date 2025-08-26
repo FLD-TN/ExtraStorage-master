@@ -103,7 +103,7 @@ permissions:
           exstorage.command.admin.reload:
             default: op
             description: 'Allows the player to reload the configuration.'
-          extrastorage.command.admin.blockto:
+          exstorage.command.admin.blockto:
             default: op
             description: 'Allows the player to use the BlockTo command.'
           exstorage.command.admin.oreto:

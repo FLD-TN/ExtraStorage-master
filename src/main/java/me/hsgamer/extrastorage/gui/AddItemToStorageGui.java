@@ -35,16 +35,12 @@ public class AddItemToStorageGui extends ESGui {
 
     public AddItemToStorageGui(Player player) {
         super("gui/add_item_to_storage", player, 1);
-        // Khởi tạo MaterialTypeConfig từ ExtraStorage instance
         this.materialTypeConfig = instance.getMaterialTypeConfig();
-        // Kiểm tra null player khi load config
         if (player != null) {
             this.storageManager = new StorageManager(instance.getUserManager().getUser(player).getStorage());
         } else {
-            // Chỉ khởi tạo config khi player null (lúc load file)
             this.storageManager = null;
         }
-
         this.handleClick(event -> {
             // Lấy thông tin cơ bản về sự kiện
             int slot = event.getEvent().getSlot();
@@ -127,6 +123,12 @@ public class AddItemToStorageGui extends ESGui {
                             if (materialTypeConfig.isBlacklisted(material)) {
                                 player.sendMessage(
                                         "§c[ExtraStorage] Vật phẩm này nằm trong danh sách vật phẩm bị cấm.");
+                            } else {
+                                // Thông báo cụ thể về loại vật phẩm được phép
+                                player.sendMessage(
+                                        "§c[ExtraStorage] §fChỉ các vật phẩm thuộc loại quặng, nông sản, hoặc vật phẩm rơi từ mob mới được phép lưu trữ.");
+                                player.sendMessage(
+                                        "§e[ExtraStorage] §fKiểm tra tệp §7material_types.yml §fđể xem danh sách vật phẩm được phép.");
                             }
 
                             return;
@@ -302,7 +304,7 @@ public class AddItemToStorageGui extends ESGui {
      * @return true nếu được phép, false nếu không
      */
     private boolean isAllowedItem(Material material) {
-        // Chặn các vật phẩm bị cấm, kính đen, và các block đặc biệt
+        // Chặn các vật phẩm đặc biệt trước
         if (material == Material.BLACK_STAINED_GLASS_PANE
                 || material == Material.AIR
                 || material == Material.BEDROCK
@@ -310,17 +312,15 @@ public class AddItemToStorageGui extends ESGui {
             return false;
         }
 
-        // Kiểm tra xem vật phẩm có trong blacklist không
-        if (materialTypeConfig.isBlacklisted(material)) {
-            return false;
-        }
-
-        // Cho phép thêm vào kho
-        return true;
+        // Sử dụng MaterialTypeConfig để kiểm tra theo whitelist (danh sách cho phép)
+        // Chỉ cho phép các vật phẩm thuộc loại quặng, nông sản, hoặc vật phẩm rơi từ
+        // mob
+        return materialTypeConfig.isAllowedItem(material);
     }
-    
+
     /**
      * Kiểm tra một ItemStack xem có được phép thêm vào kho không
+     *
      * @param item ItemStack cần kiểm tra
      * @return true nếu được phép, false nếu không
      */
@@ -328,45 +328,31 @@ public class AddItemToStorageGui extends ESGui {
         if (item == null) {
             return false;
         }
-        
-        // Kiểm tra các thuộc tính Material cơ bản
-        if (!isAllowedItem(item.getType())) {
-            return false;
-        }
-        
-        // Kiểm tra xem có phải là vật phẩm tùy chỉnh không (MMOItems, ItemsAdder, etc.)
+
+        // SỬA LỖI: Gọi đúng phương thức isCustomItem
         if (CustomItemDetector.isCustomItem(item)) {
-            // Kiểm tra MMOItems
-            if (CustomItemDetector.isMMOItem(item)) {
-                // Lấy MMOItem ID
-                String mmoItemId = CustomItemDetector.getMMOItemId(item);
-                if (mmoItemId != null) {
-                    // Tách TYPE và ID
-                    String[] parts = mmoItemId.split(":", 2);
-                    String type = parts[0];
-                    String id = parts.length > 1 ? parts[1] : "";
-                    
-                    // Kiểm tra whitelist
-                    boolean allowed = materialTypeConfig.isCustomItemWhitelisted(id, "mmoitems") || 
-                                     materialTypeConfig.isCustomItemWhitelisted(type + ":" + id, "mmoitems") ||
-                                     materialTypeConfig.isCustomItemWhitelisted(type + ":*", "mmoitems");
-                    
-                    Debug.log("[AddItemToStorageGui] MMOItem check: " + mmoItemId + " - Allowed: " + allowed);
-                    return allowed;
-                }
-                
-                // Nếu không lấy được ID, không cho phép
-                Debug.log("[AddItemToStorageGui] Không xác định được ID của MMOItem, từ chối");
+            if (!instance.getSetting().isAllowCustomItems()) {
+                Debug.log("[AddItemToStorageGui] Custom items are disabled in the config.");
                 return false;
             }
-            
-            // Kiểm tra các loại vật phẩm tùy chỉnh khác
-            // Hiện tại từ chối tất cả các loại khác
-            Debug.log("[AddItemToStorageGui] Từ chối vật phẩm tùy chỉnh không được nhận dạng: " + item.getType());
+
+            String mmoItemId = CustomItemDetector.getMMOItemId(item);
+            if (mmoItemId != null) {
+                String[] parts = mmoItemId.split(":", 2);
+                String type = parts[0];
+                String id = parts.length > 1 ? parts[1] : "";
+
+                boolean allowed = materialTypeConfig.isCustomItemWhitelisted(id, "mmoitems") ||
+                        materialTypeConfig.isCustomItemWhitelisted(type + ":" + id, "mmoitems") ||
+                        materialTypeConfig.isCustomItemWhitelisted(type + ":*", "mmoitems");
+
+                Debug.log("[AddItemToStorageGui] MMOItem check: " + mmoItemId + " - Allowed: " + allowed);
+                return allowed;
+            }
             return false;
         }
-        
-        return true;
+
+        return isAllowedItem(item.getType());
     }
 
     /**
@@ -409,28 +395,29 @@ public class AddItemToStorageGui extends ESGui {
                     }
 
                     // Kiểm tra một lần nữa xem vật phẩm có được phép lưu trữ không
-                    Material material = item.getType();
                     if (!isItemStackAllowed(item)) {
                         p.sendMessage("§c[ExtraStorage] §fVật phẩm này không được phép lưu trữ trong kho!");
-                        if (materialTypeConfig.isBlacklisted(material)) {
+                        if (materialTypeConfig.isBlacklisted(item.getType())) {
                             p.sendMessage("§c[ExtraStorage] Vật phẩm này nằm trong danh sách vật phẩm bị cấm.");
                         } else if (me.hsgamer.extrastorage.util.CustomItemDetector.isCustomItem(item)) {
-                            p.sendMessage("§c[ExtraStorage] Không thể thêm vật phẩm tùy chỉnh (MMOItems, ItemsAdder...) vào kho.");
+                            p.sendMessage("§c[ExtraStorage] Vật phẩm tùy chỉnh này chưa được hỗ trợ trong bộ lọc.");
                         }
                         p.playSound(p.getLocation(), org.bukkit.Sound.ENTITY_VILLAGER_NO, 1.0f, 1.0f);
                         return;
                     }
 
-                    // Thêm item vào kho
-                    if (storageManager != null) {
-                        storageManager.addItem(item);
-                        p.sendMessage("§a[ExtraStorage] §fĐã thêm vật phẩm vào kho!");
-                        p.playSound(p.getLocation(), org.bukkit.Sound.ENTITY_PLAYER_LEVELUP, 1.0f, 1.0f);
-                    } else {
-                        Debug.log("[GUI] StorageManager is null, cannot add item");
-                    }
+                    // Lấy key của vật phẩm
+                    String itemKey = ItemUtil.toMaterialKey(item);
 
-                    // Xóa item khỏi slot 13
+                    // SỬA LẠI LOGIC: Thêm item vào bộ lọc chứ không phải vào kho
+                    storage.addNewItem(itemKey);
+                    p.sendMessage("§a[ExtraStorage] §fĐã thêm vật phẩm vào bộ lọc!"); // SỬA LẠI TIN NHẮN
+                    p.playSound(p.getLocation(), org.bukkit.Sound.ENTITY_PLAYER_LEVELUP, 1.0f, 1.0f);
+
+                    // THÊM BƯỚC QUAN TRỌNG: Trả lại vật phẩm cho người chơi
+                    ItemUtil.giveItem(p, item);
+
+                    // Xóa item khỏi slot 13 trong GUI
                     this.getInventory().setItem(13, null);
                 });
 
@@ -441,26 +428,38 @@ public class AddItemToStorageGui extends ESGui {
                     // Lấy item trong slot 13
                     ItemStack item = this.getInventory().getItem(13);
 
-                    // Nếu không có item, chỉ cần đóng GUI
+                    // Nếu không có item, thông báo và return
                     if (item == null || item.getType() == Material.AIR) {
-                        p.sendMessage("§c[ExtraStorage] §fĐã hủy bỏ thao tác thêm vật phẩm.");
-                        p.playSound(p.getLocation(), org.bukkit.Sound.BLOCK_NOTE_BLOCK_BASS, 1.0f, 1.0f);
-                        p.closeInventory();
+                        p.sendMessage("§c[ExtraStorage] §fBạn chưa đặt vật phẩm vào ô trống!");
+                        p.playSound(p.getLocation(), org.bukkit.Sound.ENTITY_VILLAGER_NO, 1.0f, 1.0f);
                         return;
                     }
 
-                    // Trả lại item vào túi đồ của người chơi
+                    // Kiểm tra một lần nữa xem vật phẩm có được phép lưu trữ không
+                    if (!isItemStackAllowed(item)) {
+                        p.sendMessage("§c[ExtraStorage] §fVật phẩm này không được phép lưu trữ trong kho!");
+                        if (materialTypeConfig.isBlacklisted(item.getType())) {
+                            p.sendMessage("§c[ExtraStorage] Vật phẩm này nằm trong danh sách vật phẩm bị cấm.");
+                        } else if (me.hsgamer.extrastorage.util.CustomItemDetector.isCustomItem(item)) {
+                            p.sendMessage("§c[ExtraStorage] Vật phẩm tùy chỉnh này chưa được hỗ trợ trong bộ lọc.");
+                        }
+                        p.playSound(p.getLocation(), org.bukkit.Sound.ENTITY_VILLAGER_NO, 1.0f, 1.0f);
+                        return;
+                    }
+
+                    // Lấy key của vật phẩm
+                    String itemKey = ItemUtil.toMaterialKey(item);
+
+                    // SỬA LẠI LOGIC: Thêm item vào bộ lọc chứ không phải vào kho
+                    storage.addNewItem(itemKey);
+                    p.sendMessage("§a[ExtraStorage] §fĐã thêm vật phẩm vào bộ lọc!"); // SỬA LẠI TIN NHẮN
+                    p.playSound(p.getLocation(), org.bukkit.Sound.ENTITY_PLAYER_LEVELUP, 1.0f, 1.0f);
+
+                    // THÊM BƯỚC QUAN TRỌNG: Trả lại vật phẩm cho người chơi
                     ItemUtil.giveItem(p, item);
 
-                    // Thông báo
-                    p.sendMessage("§a[ExtraStorage] §fĐã trả lại vật phẩm vào túi đồ của bạn.");
-                    p.playSound(p.getLocation(), org.bukkit.Sound.BLOCK_NOTE_BLOCK_PLING, 1.0f, 1.0f);
-
-                    // Xóa item khỏi slot 13
+                    // Xóa item khỏi slot 13 trong GUI
                     this.getInventory().setItem(13, null);
-
-                    // Đóng GUI
-                    p.closeInventory();
                 });
 
         // Sách hướng dẫn từ InfoItem

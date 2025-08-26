@@ -7,18 +7,12 @@ import me.hsgamer.extrastorage.configs.Message;
 import me.hsgamer.extrastorage.data.Constants;
 
 @Command(value = { "reload", "rld", "rl" }, permission = Constants.ADMIN_RELOAD_PERMISSION)
-public final class ReloadCmd
-        extends CommandListener {
+public final class ReloadCmd extends CommandListener {
 
     @Override
     public void execute(CommandContext context) {
-        instance.getSetting().reload();
-        // Không gọi instance.getMessage() vì phương thức này không tồn tại
-        // Thay vào đó, reload config manager
         instance.getConfigManager().reload();
         instance.getWorthManager().reload();
-
         context.sendMessage(Message.getMessage("SUCCESS.config-reload"));
     }
-
 }

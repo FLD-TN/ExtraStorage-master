@@ -142,18 +142,6 @@ ControlItems:
     - '&8[&6ʀ.ᴄʟɪᴄᴋ&8] #dcdde1ᴘʀᴇᴠ. ꜰɪʟᴛᴇʀ'
     - '&8[&6s.ᴄʟɪᴄᴋ&8] #dcdde1ʀᴇᴠᴇʀsᴇ ꜰɪʟᴛᴇʀ'
     Slot: 51
-
-#This item is used to open the filter manager:
-  FilterManager:
-    Material: BOOK
-    Name: '&6Quản lý Bộ lọc'
-    Lore:
-      - '&7Mở giao diện quản lý bộ lọc'
-      - '&7để thêm vật phẩm mới vào bộ lọc'
-      - ''
-      - '&8[&6Nhấp chuột&8] &7để mở'
-    #Position of this item on the GUI:
-    Slot: 47
     
   #This item is used to add new items to the filter:
   NewItemButton:
@@ -177,7 +165,7 @@ DecorateItems:
   border:
     Material: 'BLACK_STAINED_GLASS_PANE'
     Name: ' '
-    Slots: [0-10, 18, 19, 27, 28, 36, 37, 45, 52-54]
+    Slots: [0-10, 18, 19, 27, 28, 36, 37, 45, 47, 48, 52-54]
   divider:
     Material: 'GRAY_STAINED_GLASS_PANE'
     Name: ' '

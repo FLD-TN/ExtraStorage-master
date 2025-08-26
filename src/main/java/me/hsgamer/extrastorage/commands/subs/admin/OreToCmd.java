@@ -8,6 +8,7 @@ import me.hsgamer.extrastorage.commands.abstraction.CommandContext;
 import me.hsgamer.extrastorage.commands.abstraction.CommandListener;
 import me.hsgamer.extrastorage.configs.Message;
 import me.hsgamer.extrastorage.data.Constants;
+import me.hsgamer.extrastorage.util.Utils;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
 import org.bukkit.OfflinePlayer;
@@ -16,11 +17,11 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
 
-// Sử dụng Annotation để định nghĩa lệnh, đúng theo cấu trúc của plugin
-@Command(value = "oreto", usage = "/{label} oreto <material-key> <player>", permission = "exstorage.command.admin.oreto", minArgs = 2)
+@Command(value = "oreto", usage = "/{label} oreto <material-key> <player>", permission = Constants.ADMIN_ORETO_PERMISSION, minArgs = 2)
 public final class OreToCmd extends CommandListener {
 
     private static final Map<Material, Material> BLOCK_TO_ORE_MAP = new HashMap<>();
+    private final String PLAYER_REGEX, ITEM_REGEX, QUANTITY_REGEX, VALUE_REGEX;
 
     static {
         BLOCK_TO_ORE_MAP.put(Material.COAL_BLOCK, Material.COAL);
@@ -33,39 +34,40 @@ public final class OreToCmd extends CommandListener {
     }
 
     public OreToCmd() {
-        // Constructor rỗng là đủ
+        this.PLAYER_REGEX = Utils.getRegex("player");
+        this.ITEM_REGEX = Utils.getRegex("item");
+        this.QUANTITY_REGEX = Utils.getRegex("quantity");
+        this.VALUE_REGEX = Utils.getRegex("value");
     }
 
     @Override
     public void execute(CommandContext context) {
-        // Lấy tham số theo đúng API của CommandContext
         String blockKey = context.getArgs(0).toUpperCase();
         String playerName = context.getArgs(1);
 
-        Material blockMaterial = Material.matchMaterial(blockKey);
-        if (blockMaterial == null || blockMaterial.isAir()) {
-            context.sendMessage(Message.getMessage("ERROR.invalid-material").replace("{input}", blockKey));
+        Material blockMaterial;
+        try {
+            blockMaterial = Material.valueOf(blockKey);
+        } catch (IllegalArgumentException e) {
+            context.sendMessage(Message.getMessage("FAIL.invalid-material").replace(VALUE_REGEX, blockKey));
             return;
         }
 
         if (!BLOCK_TO_ORE_MAP.containsKey(blockMaterial)) {
             context.sendMessage(
-                    "§8[§eᴋʜᴏ§bᴄʜứᴀ§8] §cLoại vật phẩm '" + blockMaterial.name() + "' không thể đổi thành quặng.");
+                    Message.getMessage("FAIL.not-convertible-to-ore").replace(ITEM_REGEX, blockMaterial.name()));
             return;
         }
         Material oreMaterial = BLOCK_TO_ORE_MAP.get(blockMaterial);
 
         OfflinePlayer targetPlayer = Bukkit.getOfflinePlayer(playerName);
-        if (!targetPlayer.hasPlayedBefore() && !targetPlayer.isOnline()) {
-            context.sendMessage(Message.getMessage("ERROR.player-not-found").replace("{input}", playerName));
+        User targetUser = instance.getUserManager().getUser(targetPlayer);
+        if (targetUser == null) {
+            context.sendMessage(Message.getMessage("FAIL.player-not-found"));
             return;
         }
 
-        // Truy cập instance trực tiếp vì nó là 'protected' trong class cha
-        User targetUser = instance.getUserManager().getUser(targetPlayer.getUniqueId());
         Storage storage = targetUser.getStorage();
-
-        // Logic lấy số lượng chính xác theo API
         String blockMaterialKey = blockMaterial.name();
         String oreMaterialKey = oreMaterial.name();
 
@@ -73,31 +75,29 @@ public final class OreToCmd extends CommandListener {
         long currentBlockAmount = blockItemOptional.map(Item::getQuantity).orElse(0L);
 
         if (currentBlockAmount < 1) {
-            context.sendMessage(
-                    "§8[§eᴋʜᴏ§bᴄʜứᴀ§8] §cNgười chơi " + targetPlayer.getName() + " không đủ " + blockMaterial.name()
-                            + " để đổi (hiện có: " + currentBlockAmount + ", cần ít nhất 1).");
+            context.sendMessage(Message.getMessage("FAIL.not-enough-to-convert")
+                    .replaceAll(PLAYER_REGEX, targetPlayer.getName())
+                    .replaceAll(ITEM_REGEX, blockMaterial.name())
+                    .replaceAll(QUANTITY_REGEX, String.valueOf(currentBlockAmount)));
             return;
         }
 
-        // Tính toán
         long blocksToRemove = currentBlockAmount;
         long oreToAdd = blocksToRemove * 9;
 
-        // Thực hiện thay đổi trong kho bằng các hàm add/subtract chính xác
         storage.subtract(blockMaterialKey, blocksToRemove);
         storage.add(oreMaterialKey, oreToAdd);
 
-        // Gửi thông báo thành công
-        context.sendMessage("§8[§eᴋʜᴏ§bᴄʜứᴀ§8] §a✔ Đã chuyển đổi thành công " + blocksToRemove + " "
-                + blockMaterial.name() + " thành "
-                + oreToAdd + " " + oreMaterial.name() + " cho người chơi " + targetPlayer.getName() + ".");
+        context.sendMessage(Message.getMessage("SUCCESS.OreTo.sender")
+                .replaceAll(QUANTITY_REGEX, String.valueOf(blocksToRemove))
+                .replaceAll(ITEM_REGEX, blockMaterial.name())
+                .replaceAll(Utils.getRegex("ores"), String.valueOf(oreToAdd))
+                .replaceAll(Utils.getRegex("ore_item"), oreMaterial.name())
+                .replaceAll(PLAYER_REGEX, targetPlayer.getName()));
 
         if (targetPlayer.isOnline()) {
-            targetPlayer.getPlayer()
-                    .sendMessage(
-                            "§8[§eᴋʜᴏ§bᴄʜứᴀ§8] §fTài nguyên của bạn đã được quản trị viên chuyển đổi thành quặng.");
+            targetPlayer.getPlayer().sendMessage(Message.getMessage("SUCCESS.OreTo.target"));
         } else {
-            // Lưu dữ liệu cho người chơi offline
             targetUser.save();
         }
     }

@@ -134,3 +134,7 @@ FormatName:
   GOLD_INGOT: '§fThỏi Vàng'
   # IA:iasurvival:banana: '&eBanana'
   # ORAXEN:amethyst: '&dAmethyst'
+
+# Allow custom items from plugins like MMOItems, ItemsAdder, etc., to be added to the storage filter.
+# If set to false, only vanilla Minecraft items can be added.
+AllowCustomItems: false

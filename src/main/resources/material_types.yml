@@ -126,17 +126,19 @@ mobdrop-materials:
 
 # Danh sách whitelist cho MMOItems
 # Định dạng: TYPE:ID hoặc TYPE:* (cho phép tất cả item của loại TYPE)
+# Đã bị vô hiệu hóa - không cho phép bất kỳ MMOItem nào
 mmoitems-whitelist:
-  - MATERIAL:ORE_IRON
-  - MATERIAL:ORE_GOLD
-  - MATERIAL:ORE_DIAMOND
-  - MATERIAL:*_INGOT
-  - MATERIAL:*_NUGGET
-  - RESOURCE:*
-  - GEM:*
+  # - MATERIAL:ORE_IRON
+  # - MATERIAL:ORE_GOLD
+  # - MATERIAL:ORE_DIAMOND
+  # - MATERIAL:*_INGOT
+  # - MATERIAL:*_NUGGET
+  # - RESOURCE:*
+  # - GEM:*
 
 # Danh sách whitelist cho các vật phẩm tùy chỉnh khác
+# Đã bị vô hiệu hóa - không cho phép bất kỳ vật phẩm tùy chỉnh nào
 custom-items-whitelist:
-  - itemsadder:iron_dust
-  - itemsadder:gold_dust
-  - itemsadder:ore_*
+  # - itemsadder:iron_dust
+  # - itemsadder:gold_dust
+  # - itemsadder:ore_*

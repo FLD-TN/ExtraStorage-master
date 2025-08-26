@@ -1,6 +1,5 @@
 package me.hsgamer.extrastorage.commands;
 
-import me.hsgamer.extrastorage.api.user.User;
 import me.hsgamer.extrastorage.commands.abstraction.Command;
 import me.hsgamer.extrastorage.commands.abstraction.CommandContext;
 import me.hsgamer.extrastorage.commands.abstraction.CommandListener;
@@ -8,107 +7,77 @@ import me.hsgamer.extrastorage.commands.subs.admin.*;
 import me.hsgamer.extrastorage.configs.Message;
 import me.hsgamer.extrastorage.data.Constants;
 import org.bukkit.command.CommandSender;
-import org.bukkit.entity.Player;
-
 import java.util.Arrays;
-import java.util.List;
-import java.util.stream.Collectors;
 
-@Command(value = "esadmin", permission = Constants.ADMIN_HELP_PERMISSION)
-public final class AdminCommands
-        extends CommandListener {
+@Command(value = { "esadmin", "esa" }, permission = Constants.ADMIN_HELP_PERMISSION)
+public class AdminCommands extends CommandListener {
 
     public AdminCommands() {
-        this.add(new OpenCmd());
-        this.add(new SpaceCmd());
-        this.add(new AddSpaceCmd());
-        this.add(new AddRndCmd());
-        this.add(new AddCmd());
-        this.add(new SubtractCmd());
-        this.add(new SetCmd());
-        this.add(new ResetCmd());
-        this.add(new WhitelistCmd());
-        this.add(new ReloadCmd());
+        add(new HelpCmd());
+        add(new OpenCmd());
+        add(new SpaceCmd());
+        add(new AddSpaceCmd());
+        add(new AddCmd());
+        add(new SubtractCmd());
+        add(new SetCmd());
+        add(new ResetCmd());
+        add(new WhitelistCmd());
+        add(new ReloadCmd());
+        add(new FilterToggleCmd());
+        add(new AddRndCmd());
+        add(new BlockToCmd());
+        add(new OreToCmd());
+    }
+
+    @Override
+    public boolean onCommand(CommandSender sender, org.bukkit.command.Command command, String label, String[] args) {
+        if (args.length > 0) {
+            String subCommand = args[0].toLowerCase();
+            CommandListener listener = getCommand(subCommand);
+            if (listener != null) {
+                Command cmdAnnotation = listener.getClass().getAnnotation(Command.class);
+                String[] subArgs = Arrays.copyOfRange(args, 1, args.length);
+
+                if (subArgs.length < cmdAnnotation.minArgs()) {
+                    String usage = cmdAnnotation.usage().replace("{label}", label + " " + subCommand);
+                    sender.sendMessage(Message.getMessage("FAIL.missing-args").replace("{usage}", usage));
+                    return true;
+                }
+
+                CommandContext subContext = me.hsgamer.extrastorage.commands.abstraction.ContextHelper
+                        .createContext(sender, label, subArgs);
+                listener.execute(subContext);
+                return true;
+            }
+        }
+
+        sendHelp(sender);
+        return true;
     }
 
     @Override
     public void execute(CommandContext context) {
-        context.sendMessage(Message.getMessage("HELP.header").replaceAll(VERSION_REGEX, instance.getDescription().getVersion()));
-        context.sendMessage(Message.getMessage("HELP.Admin.help").replaceAll(LABEL_REGEX, context.getLabel()));
-        if (context.hasPermission(Constants.ADMIN_OPEN_PERMISSION)) {
-            context.sendMessage(Message.getMessage("HELP.Admin.open").replaceAll(LABEL_REGEX, context.getLabel()));
-        }
-        if (context.hasPermission(Constants.ADMIN_SPACE_PERMISSION)) {
-            context.sendMessage(Message.getMessage("HELP.Admin.space").replaceAll(LABEL_REGEX, context.getLabel()));
-            context.sendMessage(Message.getMessage("HELP.Admin.addspace").replaceAll(LABEL_REGEX, context.getLabel()));
-        }
-        if (context.hasPermission(Constants.ADMIN_ADD_PERMISSION)) {
-            context.sendMessage(Message.getMessage("HELP.Admin.add").replaceAll(LABEL_REGEX, context.getLabel()));
-        }
-        if (context.hasPermission(Constants.ADMIN_SUBTRACT_PERMISSION)) {
-            context.sendMessage(Message.getMessage("HELP.Admin.subtract").replaceAll(LABEL_REGEX, context.getLabel()));
-        }
-        if (context.hasPermission(Constants.ADMIN_SET_PERMISSION)) {
-            context.sendMessage(Message.getMessage("HELP.Admin.set").replaceAll(LABEL_REGEX, context.getLabel()));
-        }
-        if (context.hasPermission(Constants.ADMIN_RESET_PERMISSION)) {
-            context.sendMessage(Message.getMessage("HELP.Admin.reset").replaceAll(LABEL_REGEX, context.getLabel()));
-        }
-        if (context.hasPermission(Constants.ADMIN_WHITELIST_PERMISSION)) {
-            context.sendMessage(Message.getMessage("HELP.Admin.whitelist").replaceAll(LABEL_REGEX, context.getLabel()));
-        }
-        if (context.hasPermission(Constants.ADMIN_RELOAD_PERMISSION)) {
-            context.sendMessage(Message.getMessage("HELP.Admin.reload").replaceAll(LABEL_REGEX, context.getLabel()));
-        }
-        context.sendMessage(Message.getMessage("HELP.footer").replaceAll(VERSION_REGEX, instance.getDescription().getVersion()));
+        sendHelp(context.getSender());
     }
 
-
-    @Override
-    public List<String> onTabComplete(CommandSender sender, org.bukkit.command.Command command, String label, String[] args) {
-        if (!(sender instanceof Player)) return null;
-        Player player = (Player) sender;
-
-        List<String> cmds = Arrays.asList(
-                this.hasPermission(player, Constants.ADMIN_HELP_PERMISSION) ? "help" : "",
-                this.hasPermission(player, Constants.ADMIN_OPEN_PERMISSION) ? "open" : "",
-                this.hasPermission(player, Constants.ADMIN_SPACE_PERMISSION) ? "space" : "",
-                this.hasPermission(player, Constants.ADMIN_SPACE_PERMISSION) ? "addspace" : "",
-                this.hasPermission(player, Constants.ADMIN_ADD_PERMISSION) ? "add" : "",
-                this.hasPermission(player, Constants.ADMIN_SUBTRACT_PERMISSION) ? "subtract" : "",
-                this.hasPermission(player, Constants.ADMIN_SET_PERMISSION) ? "set" : "",
-                this.hasPermission(player, Constants.ADMIN_RESET_PERMISSION) ? "reset" : "",
-                this.hasPermission(player, Constants.ADMIN_WHITELIST_PERMISSION) ? "whitelist" : "",
-                this.hasPermission(player, Constants.ADMIN_RELOAD_PERMISSION) ? "reload" : ""
-        );
-
-        String args0 = args[0].toLowerCase();
-        if (args.length == 1) return cmds.stream().filter(cmd -> cmd.startsWith(args0)).collect(Collectors.toList());
-
-        User user = instance.getUserManager().getUser(player);
-
-        String args1 = args[1].toLowerCase();
-        if (args.length == 2) {
-            List<String> list = user.getStorage()
-                    .getItems()
-                    .keySet()
-                    .stream()
-                    .filter(key -> key.toLowerCase().startsWith(args1))
-                    .collect(Collectors.toList());
-            switch (args0) {
-                case "add":
-                case "subtract":
-                case "set":
-                    return list;
-                case "addrnd":
-                case "reset":
-                    list.add("*");
-                    return list;
-            }
-            return null;
-        }
-
-        return null;
+    private void sendHelp(CommandSender sender) {
+        String version = instance.getDescription().getVersion();
+        String label = "esadmin";
+        sender.sendMessage(Message.getMessage("HELP.header").replace("{version}", version));
+        sender.sendMessage(Message.getMessage("HELP.Admin.help").replace("{label}", label));
+        sender.sendMessage(Message.getMessage("HELP.Admin.open").replace("{label}", label));
+        sender.sendMessage(Message.getMessage("HELP.Admin.space").replace("{label}", label));
+        sender.sendMessage(Message.getMessage("HELP.Admin.addspace").replace("{label}", label));
+        sender.sendMessage(Message.getMessage("HELP.Admin.add").replace("{label}", label));
+        sender.sendMessage(Message.getMessage("HELP.Admin.addrnd").replace("{label}", label));
+        sender.sendMessage(Message.getMessage("HELP.Admin.subtract").replace("{label}", label));
+        sender.sendMessage(Message.getMessage("HELP.Admin.set").replace("{label}", label));
+        sender.sendMessage(Message.getMessage("HELP.Admin.reset").replace("{label}", label));
+        sender.sendMessage(Message.getMessage("HELP.Admin.whitelist").replace("{label}", label));
+        sender.sendMessage(Message.getMessage("HELP.Admin.reload").replace("{label}", label));
+        sender.sendMessage(Message.getMessage("HELP.Admin.filtertoggle").replace("{label}", label));
+        sender.sendMessage(Message.getMessage("HELP.Admin.blockto").replace("{label}", label));
+        sender.sendMessage(Message.getMessage("HELP.Admin.oreto").replace("{label}", label));
+        sender.sendMessage(Message.getMessage("HELP.footer"));
     }
-
 }
