@@ -1,6 +1,6 @@
 Settings:
   #The title of GUI:
-  Title: '         &0ᴡʜɪᴛᴇʟɪꜱᴛ ꜰɪʟᴛᴇʀ'
+  Title: '         &0BỘ LỌC DANH SÁCH TRẮNG'
   #Rows on GUI:
   # * The value can only be from 1 to 6.
   Rows: 6
@@ -16,11 +16,11 @@ RepresentItem:
   #Lore: []
   Lore:
   - ''
-  - '&c* By removing this item, it'
-  - '&cwill no longer be picked up'
-  - '&cto the player''s storage.'
+  - '&c* Khi xóa vật phẩm này,'
+  - '&cnó sẽ không còn được nhặt'
+  - '&cvào kho của người chơi.'
   - ''
-  - '&8[&6Click&8] &7Remove this item.'
+  - '&8[&6Nhấp&8] &7Xóa vật phẩm này.'
   #List of positions for this icon:
   Slots: [11-17, 20-26, 29-35]
 
@@ -30,29 +30,29 @@ ControlItems:
   #Back to previous page:
   PreviousPage:
     Material: 'ARROW'
-    Name: '&8[&6ᴄʟɪᴄᴋ&8] #dcdde1ᴘʀᴇᴠɪᴏᴜs ᴘᴀɢᴇ'
+    Name: '&8[&6NHẤP&8] #dcdde1TRANG TRƯỚC'
     Lore:
-    - '&7ᴄᴜʀʀᴇɴᴛ ᴘᴀɢᴇ: &f{page}&7/&c{max_pages}'
+    - '&7TRANG HIỆN TẠI: &f{page}&7/&c{max_pages}'
     Slots: [49]
   #Go to next page:
   NextPage:
     Material: 'ARROW'
     CustomModelData: 0
-    Name: '&8[&6ᴄʟɪᴄᴋ&8] #dcdde1ɴᴇxᴛ ᴘᴀɢᴇ'
+    Name: '&8[&6NHẤP&8] #dcdde1TRANG SAU'
     Lore:
-    - '&7ᴄᴜʀʀᴇɴᴛ ᴘᴀɢᴇ: &f{page}&7/&c{max_pages}'
+    - '&7TRANG HIỆN TẠI: &f{page}&7/&c{max_pages}'
     Slots: [51]
 
   #Sorting items by name:
   SortByName:
     Material: 'BOOK'
-    Name: '#dcdde1sᴏʀᴛ sᴛᴏʀᴀɢᴇ ᴄᴏɴᴛᴇɴᴛ'
+    Name: '#dcdde1SẮP XẾP KHO CHỨA'
     Lore:
     - ''
-    - '&2→ &aSort by name'
+    - '&2→ &aSắp xếp theo tên'
     - ''
-    - '&8[&6ʟ.ᴄʟɪᴄᴋ&8] &7Sorting A - Z'
-    - '&8[&6R-Click&8] &7Sorting Z - A'
+    - '&8[&6TRÁI&8] &7Sắp xếp A - Z'
+    - '&8[&6PHẢI&8] &7Sắp xếp Z - A'
     Slot: 50
 
 #These are decorative items, which will make your GUI more beautiful!

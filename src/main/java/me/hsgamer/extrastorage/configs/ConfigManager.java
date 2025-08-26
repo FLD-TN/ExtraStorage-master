@@ -3,6 +3,10 @@ package me.hsgamer.extrastorage.configs;
 import me.hsgamer.extrastorage.ExtraStorage;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.configuration.file.YamlConfiguration;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 
 import java.io.File;
 import java.util.HashMap;
@@ -21,15 +25,31 @@ public class ConfigManager {
     }
 
     public void reload() {
-        // Save default config files
+        // Save default config.yml
         plugin.saveDefaultConfig();
-        plugin.saveResource("messages.yml", false);
+        // Ensure messages.yml exists and load with defaults
+        File messageFile = new File(plugin.getDataFolder(), "messages.yml");
+        if (!messageFile.exists()) {
+            plugin.saveResource("messages.yml", false);
+        }
+        // Load user messages
+        FileConfiguration messageConfig = YamlConfiguration.loadConfiguration(messageFile);
+        // Load default messages from jar and apply defaults
+        InputStream defStream = plugin.getResource("messages.yml");
+        if (defStream != null) {
+            try (InputStreamReader reader = new InputStreamReader(defStream, StandardCharsets.UTF_8)) {
+                YamlConfiguration defConfig = YamlConfiguration.loadConfiguration(reader);
+                messageConfig.setDefaults(defConfig);
+                messageConfig.options().copyDefaults(true);
+                messageConfig.save(messageFile);
+            } catch (IOException e) {
+                plugin.getLogger().severe("Failed to load default messages: " + e.getMessage());
+            }
+        }
+        // Initialize messages
+        Message.init(messageConfig);
         plugin.saveResource("worth.yml", false);
 
-        // Initialize messages
-        File messageFile = new File(plugin.getDataFolder(), "messages.yml");
-        FileConfiguration messageConfig = YamlConfiguration.loadConfiguration(messageFile);
-        Message.init(messageConfig);
 
         // Xóa cache của GuiConfig để đảm bảo tải lại từ file
         me.hsgamer.extrastorage.gui.config.GuiConfig.clearCache();

@@ -1,5 +1,5 @@
 Settings:
-  Title: '         &0ᴘᴀʀᴛɴᴇʀ ʀᴇǫᴜᴇsᴛs'
+  Title: '         &0YÊU CẦU ĐỐI TÁC'
   Rows: 3
   Sound: 'ui_button_click'
 
@@ -9,13 +9,13 @@ RequestItem:
   Data: 0
   CustomModelData: 0
   Texture: '%partner%'
-  Name: '&fRequest from: &6{partner}'
+  Name: '&fYêu cầu từ: &6{partner}'
   Lore:
     - ''
-    - '&7+ Timestamp: &f{time}'
+    - '&7+ Thời gian: &f{time}'
     - ''
-    - '&8[&aʟ.ᴄʟɪᴄᴋ&8] &7Accept request'
-    - '&8[&cʀ.ᴄʟɪᴄᴋ&8] &7Deny request'
+    - '&8[&aTRÁI&8] &7Chấp nhận'
+    - '&8[&cPHẢI&8] &7Từ chối'
   Slots: [10-16]
 
 DecorateItems:

@@ -1,6 +1,6 @@
 Settings:
   #The title of GUI:
-  Title: '           &0sᴇʟʟɪɴɢ ɪᴛᴇᴍs'
+  Title: '           &0BÁN VẬT PHẨM'
   #Rows on GUI:
   # * The value can only be from 1 to 6.
   Rows: 6
@@ -21,15 +21,15 @@ RepresentItem:
   #Lore: []
   Lore:
   - ''
-  - '&7+ Status: &r{status}'
-  - '&7+ You have: &e{quantity}'
+  - '&7+ Trạng thái: &r{status}'
+  - '&7+ Bạn có: &e{quantity}'
   - ''
-  - '&3* Price: &b${price}'
-  - '&3* Amount: &bx{amount}'
+  - '&3* Giá bán: &b${price}'
+  - '&3* Số lượng bán: &bx{amount}'
   - ''
-  - '&8[&6ʟ.ᴄʟɪᴄᴋ&8] &7Sell one.'
-  - '&8[&6ʀ.ᴄʟɪᴄᴋ&8] &7Sell stack.'
-  - '&8[&6s.ᴄʟɪᴄᴋ&8] &7Sell all.'
+  - '&8[&6Chuột Trái&8] &7Bán một.'
+  - '&8[&6Chuột Phải&8] &7Bán một stack.'
+  - '&8[&6Shift-Trái&8] &7Bán tất cả.'
   #List of positions for this icon:
   Slots: [11-17, 20-26, 29-35]
 
@@ -38,123 +38,114 @@ RepresentItem:
 ControlItems:
   #This item is used to display the user's storage information:
   About:
-    #For those who prefer to use custom models from ItemsAdder (or Oraxen),
-    #use this option to specify a model.
-    #Format: 'Oraxen:<id>' or 'IA:<namespaceId>'
-    # * If this option is used, it means that: Material and Data cannot be used.
-    # * Remember to remove the 'CustomModelData' option first.
-    # * Leave it blank will disable this feature.
-    Model: '' #May not need to configure.
+    Model: ''
     Material: 'PAPER'
-    Amount: 1 #May not need to configure.
-    Data: 0 #May not need to configure.
-    #Using 'Texture' option if you want to display the head texture (requires Material is PLAYER_HEAD):
-    #Texture: '<value>' #Can be found at: https://minecraft-heads.com/ (Value field).
-    #Texture: 'hdb-<id>' #Using for HeadDatabase plugin.
+    Amount: 1
+    Data: 0
     Texture: '%player%'
-    CustomModelData: 0 #Can only be used on the server version 1.14+. May not need to configure.
-    Name: '#dcdde1ᴘʟᴀʏᴇʀ sᴛᴏʀᴀɢᴇ ɪɴꜰᴏʀᴍᴀᴛɪᴏɴ' #May not need to configure.
-    Lore: #May not need to configure.
+    CustomModelData: 0
+    Name: '#dcdde1Thông Tin Kho Chứa'
+    Lore:
     - ''
-    - '&7+ Owner: &b{player}'
+    - '&7+ Chủ sở hữu: &b{player}'
     - ''
-    - '&7+ Status: &r{status}'
+    - '&7+ Trạng thái: &r{status}'
     - ''
-    - '&7+ Space: &e{space}'
+    - '&7+ Dung lượng: &e{space}'
     - ''
-    - '&7+ Used space: &f{used_space} &7/ &c{used_percent}'
+    - '&7+ Đã sử dụng: &f{used_space} &7/ &c{used_percent}'
     - ''
-    - '&7+ Free space: &f{free_space} &7/ &c{free_percent}'
+    - '&7+ Còn trống: &f{free_space} &7/ &c{free_percent}'
     Slot: 50
   #Back to previous page:
   PreviousPage:
     Material: 'ARROW'
-    Name: '&8[&6ᴄʟɪᴄᴋ&8] #dcdde1ᴘʀᴇᴠɪᴏᴜs ᴘᴀɢᴇ'
+    Name: '&8[&6Nhấp&8] #dcdde1Trang Trước'
     Lore:
-    - '&7ᴄᴜʀʀᴇɴᴛ ᴘᴀɢᴇ: &f{page}&7/&c{max_pages}'
+    - '&7Trang hiện tại: &f{page}&7/&c{max_pages}'
     Slot: 48
   #Go to next page:
   NextPage:
     Material: 'ARROW'
-    Name: '&8[&6ᴄʟɪᴄᴋ&8] #dcdde1ɴᴇxᴛ ᴘᴀɢᴇ'
+    Name: '&8[&6Nhấp&8] #dcdde1Trang Sau'
     Lore:
-    - '&7ᴄᴜʀʀᴇɴᴛ ᴘᴀɢᴇ: &f{page}&7/&c{max_pages}'
+    - '&7Trang hiện tại: &f{page}&7/&c{max_pages}'
     Slot: 52
 
 
   #Switching button between GUIs:
   SwitchGui:
     Material: 'CHEST_MINECART'
-    Name: '#dcdde1sᴡɪᴛᴄʜ ᴛᴏ ᴏᴛʜᴇʀ sᴛᴏʀᴀɢᴇ'
+    Name: '#dcdde1Chuyển Đổi Kho Chứa'
     Lore:
     - ''
-    - '&8 ● &7Partners'
-    - '&8 ● &7Filter'
-    - '&8 ● &7Storage'
-    - '&2→ &aSelling'
+    - '&8 ● &7Đối Tác'
+    - '&8 ● &7Bộ Lọc'
+    - '&8 ● &7Kho Chứa'
+    - '&2→ &aBán Hàng'
     - ''
-    - '&8[&6ʟ.ᴄʟɪᴄᴋ&8] #dcdde1ɴᴇxᴛ sᴛᴏʀᴀɢᴇ'
-    - '&8[&6ʀ.ᴄʟɪᴄᴋ&8] #dcdde1ᴘʀᴇᴠ. sᴛᴏʀᴀɢᴇ'
+    - '&8[&6Chuột Trái&8] #dcdde1Kho tiếp theo'
+    - '&8[&6Chuột Phải&8] #dcdde1Kho trước đó'
     Slot: 49
 
   #Sorting items by material:
   SortByMaterial:
     Material: 'BOOK'
-    Name: '#dcdde1sᴏʀᴛ sᴛᴏʀᴀɢᴇ ᴄᴏɴᴛᴇɴᴛ'
+    Name: '#dcdde1Sắp Xếp Kho Chứa'
     Lore:
     - ''
-    - '&2→ &aBy material'
-    - '&8 ● &7By name'
-    - '&8 ● &7By quantity'
-    - '&8 ● &7By unfiltered'
+    - '&2→ &aTheo vật liệu'
+    - '&8 ● &7Theo tên'
+    - '&8 ● &7Theo số lượng'
+    - '&8 ● &7Theo chưa lọc'
     - ''
-    - '&8[&6ʟ.ᴄʟɪᴄᴋ&8] #dcdde1ɴᴇxᴛ ꜰɪʟᴛᴇʀ'
-    - '&8[&6ʀ.ᴄʟɪᴄᴋ&8] #dcdde1ᴘʀᴇᴠ. ꜰɪʟᴛᴇʀ'
-    - '&8[&6s.ᴄʟɪᴄᴋ&8] #dcdde1ʀᴇᴠᴇʀsᴇ ꜰɪʟᴛᴇʀ'
+    - '&8[&6Chuột Trái&8] #dcdde1Bộ lọc tiếp'
+    - '&8[&6Chuột Phải&8] #dcdde1Bộ lọc trước'
+    - '&8[&6Shift&8] #dcdde1Đảo ngược'
     Slot: 51
   #Sorting items by name:
   SortByName:
     Material: 'BOOK'
-    Name: '#dcdde1sᴏʀᴛ sᴛᴏʀᴀɢᴇ ᴄᴏɴᴛᴇɴᴛ'
+    Name: '#dcdde1Sắp Xếp Kho Chứa'
     Lore:
     - ''
-    - '&8 ● &7By material'
-    - '&2→ &aBy name'
-    - '&8 ● &7By quantity'
-    - '&8 ● &7By unfiltered'
+    - '&8 ● &7Theo vật liệu'
+    - '&2→ &aTheo tên'
+    - '&8 ● &7Theo số lượng'
+    - '&8 ● &7Theo chưa lọc'
     - ''
-    - '&8[&6ʟ.ᴄʟɪᴄᴋ&8] #dcdde1ɴᴇxᴛ ꜰɪʟᴛᴇʀ'
-    - '&8[&6ʀ.ᴄʟɪᴄᴋ&8] #dcdde1ᴘʀᴇᴠ. ꜰɪʟᴛᴇʀ'
-    - '&8[&6s.ᴄʟɪᴄᴋ&8] #dcdde1ʀᴇᴠᴇʀsᴇ ꜰɪʟᴛᴇʀ'
+    - '&8[&6Chuột Trái&8] #dcdde1Bộ lọc tiếp'
+    - '&8[&6Chuột Phải&8] #dcdde1Bộ lọc trước'
+    - '&8[&6Shift&8] #dcdde1Đảo ngược'
     Slot: 51
   #Sorting items by quantity:
   SortByQuantity:
     Material: 'BOOK'
-    Name: '#dcdde1sᴏʀᴛ sᴛᴏʀᴀɢᴇ ᴄᴏɴᴛᴇɴᴛ'
+    Name: '#dcdde1Sắp Xếp Kho Chứa'
     Lore:
     - ''
-    - '&8 ● &7By material'
-    - '&8 ● &7By name'
-    - '&2→ &aBy quantity'
-    - '&8 ● &7By unfiltered'
+    - '&8 ● &7Theo vật liệu'
+    - '&8 ● &7Theo tên'
+    - '&2→ &aTheo số lượng'
+    - '&8 ● &7Theo chưa lọc'
     - ''
-    - '&8[&6ʟ.ᴄʟɪᴄᴋ&8] #dcdde1ɴᴇxᴛ ꜰɪʟᴛᴇʀ'
-    - '&8[&6ʀ.ᴄʟɪᴄᴋ&8] #dcdde1ᴘʀᴇᴠ. ꜰɪʟᴛᴇʀ'
-    - '&8[&6s.ᴄʟɪᴄᴋ&8] #dcdde1ʀᴇᴠᴇʀsᴇ ꜰɪʟᴛᴇʀ'
+    - '&8[&6Chuột Trái&8] #dcdde1Bộ lọc tiếp'
+    - '&8[&6Chuột Phải&8] #dcdde1Bộ lọc trước'
+    - '&8[&6Shift&8] #dcdde1Đảo ngược'
     Slot: 51
   #Sorting unfiltered items first:
   SortByUnfilter:
     Material: 'BOOK'
-    Name: '#dcdde1sᴏʀᴛ sᴛᴏʀᴀɢᴇ ᴄᴏɴᴛᴇɴᴛ'
+    Name: '#dcdde1Sắp Xếp Kho Chứa'
     Lore:
     - ''
-    - '&8 ● &7By material'
-    - '&8 ● &7By name'
-    - '&8 ● &7By quantity'
-    - '&2→ &aBy unfiltered'
+    - '&8 ● &7Theo vật liệu'
+    - '&8 ● &7Theo tên'
+    - '&8 ● &7Theo số lượng'
+    - '&2→ &aTheo chưa lọc'
     - ''
-    - '&8[&6ʟ.ᴄʟɪᴄᴋ&8] #dcdde1ɴᴇxᴛ ꜰɪʟᴛᴇʀ'
-    - '&8[&6ʀ.ᴄʟɪᴄᴋ&8] #dcdde1ᴘʀᴇᴠ. ꜰɪʟᴛᴇʀ'
+    - '&8[&6Chuột Trái&8] #dcdde1Bộ lọc tiếp'
+    - '&8[&6Chuột Phải&8] #dcdde1Bộ lọc trước'
     Slot: 51
 
 #These are decorative items, which will make your GUI more beautiful!

@@ -27,15 +27,13 @@ public class CustomItemDetector {
 
         ItemMeta meta = item.getItemMeta();
         // Phương pháp đáng tin cậy nhất là kiểm tra PersistentDataContainer
-        if (meta.hasPersistentDataContainer()) {
-            PersistentDataContainer container = meta.getPersistentDataContainer();
-            for (NamespacedKey key : container.getKeys()) {
-                String namespace = key.getNamespace().toLowerCase();
-                // Nếu item có bất kỳ "dấu hiệu" nào từ các plugin này, nó là custom item
-                if (namespace.equals("mmoitems") || namespace.equals("itemsadder") || namespace.equals("oraxen")) {
-                    Debug.log("Item detected as Custom Item (namespace: " + namespace + "): " + item.getType());
-                    return true;
-                }
+        PersistentDataContainer container = meta.getPersistentDataContainer();
+        for (NamespacedKey key : container.getKeys()) {
+            String namespace = key.getNamespace().toLowerCase();
+            // Nếu item có bất kỳ "dấu hiệu" nào từ các plugin này, nó là custom item
+            if (namespace.equals("mmoitems") || namespace.equals("itemsadder") || namespace.equals("oraxen")) {
+                Debug.log("Item detected as Custom Item (namespace: " + namespace + "): " + item.getType());
+                return true;
             }
         }
 

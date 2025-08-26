@@ -1,6 +1,6 @@
 Settings:
   #The title of GUI:
-  Title: '         &0sᴛᴏʀᴀɢᴇ ᴘᴀʀᴛɴᴇʀ'
+  Title: '         &0ĐỐI TÁC KHO'
   #Rows on GUI:
   # * The value can only be from 1 to 6.
   Rows: 6
@@ -26,14 +26,14 @@ RepresentItem:
   #Texture: '%partner%' #Displaying the partner's skull.
   Texture: '%partner%'
   #Name: ''
-  Name: '&fPartner: &6{partner}' #May not need to configure.
+  Name: '&fĐối tác: &6{partner}' #May not need to configure.
   #Lore: []
   Lore: #May not need to configure.
   - ''
-  - '&7+ Timestamp: &f{time}'
+  - '&7+ Thời gian: &f{time}'
   - ''
-  - '&8[&6ᴄʟɪᴄᴋ&8] &7Remove this partner'
-  - '&7from your list.'
+  - '&8[&6NHẤP&8] &7Xóa đối tác này'
+  - '&7khỏi danh sách của bạn.'
   #List of positions for this icon:
   Slots: [11-17, 20-26, 29-35]
 
@@ -57,69 +57,69 @@ ControlItems:
     # * Leave it blank will disable this feature.
     Model: '' #May not need to configure.
     Material: 'PAPER'
-    Name: '#dcdde1ʏᴏᴜʀ ᴘᴀʀᴛɴᴇʀs ʟɪsᴛ'
+    Name: '#dcdde1DANH SÁCH ĐỐI TÁC'
     Lore: #May not need to configure.
     - ''
-    - '&7+ Total partners: &a{total_partners}'
+    - '&7+ Tổng số đối tác: &a{total_partners}'
     - ''
-    - '&8[&6s.ᴄʟɪᴄᴋ&8] &7Cleanup your list.'
+    - '&8[&6S.NHẤP&8] &7Dọn dẹp danh sách.'
     Slot: 50
   #Back to previous page:
   PreviousPage:
     Material: 'ARROW'
-    Name: '&8[&6ᴄʟɪᴄᴋ&8] #dcdde1ᴘʀᴇᴠɪᴏᴜs ᴘᴀɢᴇ'
+    Name: '&8[&6NHẤP&8] #dcdde1TRANG TRƯỚC'
     Lore:
-    - '&7ᴄᴜʀʀᴇɴᴛ ᴘᴀɢᴇ: &f{page}&7/&c{max_pages}'
+    - '&7TRANG HIỆN TẠI: &f{page}&7/&c{max_pages}'
     Slot: 48
   #Go to next page:
   NextPage:
     Material: 'ARROW'
-    Name: '&8[&6ᴄʟɪᴄᴋ&8] #dcdde1ɴᴇxᴛ ᴘᴀɢᴇ'
+    Name: '&8[&6NHẤP&8] #dcdde1TRANG SAU'
     Lore:
-    - '&7ᴄᴜʀʀᴇɴᴛ ᴘᴀɢᴇ: &f{page}&7/&c{max_pages}'
+    - '&7TRANG HIỆN TẠI: &f{page}&7/&c{max_pages}'
     Slot: 52
 
 
   #Switching button between GUIs:
   SwitchGui:
     Material: 'CHEST_MINECART'
-    Name: '#dcdde1sᴡɪᴛᴄʜ ᴛᴏ ᴏᴛʜᴇʀ sᴛᴏʀᴀɢᴇ'
+    Name: '#dcdde1CHUYỂN ĐỔI KHO CHỨA'
     Lore:
     - ''
-    - '&2→ &aPartners'
-    - '&8 ● &7Filter'
-    - '&8 ● &7Storage'
-    - '&8 ● &7Selling'
+    - '&2→ &aĐối Tác'
+    - '&8 ● &7Bộ Lọc'
+    - '&8 ● &7Kho Chứa'
+    - '&8 ● &7Bán Hàng'
     - ''
-    - '&8[&6ʟ.ᴄʟɪᴄᴋ&8] #dcdde1ɴᴇxᴛ sᴛᴏʀᴀɢᴇ'
-    - '&8[&6ʀ.ᴄʟɪᴄᴋ&8] #dcdde1ᴘʀᴇᴠ. sᴛᴏʀᴀɢᴇ'
+    - '&8[&6TRÁI&8] #dcdde1KHO TIẾP THEO'
+    - '&8[&6PHẢI&8] #dcdde1KHO TRƯỚC ĐÓ'
     Slot: 49
 
   #Sorting items by partner name:
   SortByName:
     Material: 'BOOK'
-    Name: '&fSorting Partners'
+    Name: '&fSắp xếp Đối Tác'
     Lore:
     - ''
-    - '&2→ &aParter''s name'
-    - '&8 ● &7Timestamp'
+    - '&2→ &aTên đối tác'
+    - '&8 ● &7Thời gian'
     - ''
-    - '&8[&6ʟ.ᴄʟɪᴄᴋ&8] #dcdde1ɴᴇxᴛ ꜰɪʟᴛᴇʀ'
-    - '&8[&6ʀ.ᴄʟɪᴄᴋ&8] #dcdde1ᴘʀᴇᴠ. ꜰɪʟᴛᴇʀ'
-    - '&8[&6s.ᴄʟɪᴄᴋ&8] #dcdde1ʀᴇᴠᴇʀsᴇ ꜰɪʟᴛᴇʀ'
+    - '&8[&6TRÁI&8] #dcdde1BỘ LỌC TIẾP'
+    - '&8[&6PHẢI&8] #dcdde1BỘ LỌC TRƯỚC'
+    - '&8[&6S.NHẤP&8] #dcdde1ĐẢO NGƯỢC'
     Slot: 51
   #Sorting items by timestamp:
   SortByTime:
     Material: 'BOOK'
-    Name: '&fSorting Partners'
+    Name: '&fSắp xếp Đối Tác'
     Lore:
     - ''
-    - '&8 ● &7Parter''s name'
-    - '&2→ &aTimestamp'
+    - '&8 ● &7Tên đối tác'
+    - '&2→ &aThời gian'
     - ''
-    - '&8[&6ʟ.ᴄʟɪᴄᴋ&8] #dcdde1ɴᴇxᴛ ꜰɪʟᴛᴇʀ'
-    - '&8[&6ʀ.ᴄʟɪᴄᴋ&8] #dcdde1ᴘʀᴇᴠ. ꜰɪʟᴛᴇʀ'
-    - '&8[&6s.ᴄʟɪᴄᴋ&8] #dcdde1ʀᴇᴠᴇʀsᴇ ꜰɪʟᴛᴇʀ'
+    - '&8[&6TRÁI&8] #dcdde1BỘ LỌC TIẾP'
+    - '&8[&6PHẢI&8] #dcdde1BỘ LỌC TRƯỚC'
+    - '&8[&6S.NHẤP&8] #dcdde1ĐẢO NGƯỢC'
     Slot: 51
 
 #These are decorative items, which will make your GUI more beautiful!

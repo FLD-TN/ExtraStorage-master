@@ -1,149 +1,149 @@
 Settings:
-  #The title of GUI:
-  Title: '          &0sᴛᴏʀᴀɢᴇ ꜰɪʟᴛᴇʀ'
-  #Rows on GUI:
-  # * The value can only be from 1 to 6.
+  #Tiêu đề của GUI:
+  Title: '         &0BỘ LỌC KHO'
+  #Số hàng trên GUI:
+  # * Giá trị chỉ có thể từ 1 đến 6.
   Rows: 6
 
-  #Default sort type:
-  # * Available: MATERIAL, NAME and QUANTITY.
+  #Loại sắp xếp mặc định:
+  # * Có sẵn: MATERIAL, NAME và QUANTITY.
   DefaultSort: MATERIAL
 
-  #Plays a sound when the player interacts on GUI:
-  #Empty the string (like below) will disable this feature.
+  #Phát âm thanh khi người chơi tương tác trên GUI:
+  #Để trống chuỗi (như bên dưới) sẽ tắt tính năng này.
   #Sound: ''
   Sound: 'ui_button_click'
 
-#This icon represents items that are in the filter.
+#Biểu tượng này đại diện cho các vật phẩm có trong bộ lọc.
 RepresentItem:
-  #Empty the string (like below) will use the configured items name.
+  #Để trống chuỗi (như bên dưới) sẽ sử dụng tên vật phẩm đã cấu hình.
   Name: ''
   #Lore: []
   Lore:
   - ''
-  - '&7+ Quantity: &e{quantity}'
+  - '&7+ Số lượng: &e{quantity}'
   - ''
-  - '&c* By removing this item, it'
-  - '&cwill no longer be picked up'
-  - '&cto your storage, but still'
-  - '&cstay in if the quantity is'
-  - '&cmore than 0.'
+  - '&c* Bằng cách xóa vật phẩm này, nó'
+  - '&csẽ không còn được nhặt'
+  - '&cvào kho của bạn, nhưng vẫn'
+  - '&ctồn tại nếu số lượng'
+  - '&cnhiều hơn 0.'
   - ''
-  - '&8[&6ᴄʟɪᴄᴋ&8] &7Remove this item'
-  - '&7from your filter.'
-  #List of positions for this icon:
+  - '&8[&6Click&8] &7Xóa vật phẩm này'
+  - '&7khỏi bộ lọc của bạn.'
+  #Danh sách vị trí cho biểu tượng này:
   Slots: [11-17, 20-26, 29-35]
 
-# * Please do not delete any items in this section.
-# * If you don't want to display these items on GUI, just set their slot to -1.
+# * Vui lòng không xóa bất kỳ vật phẩm nào trong phần này.
+# * Nếu bạn không muốn hiển thị các vật phẩm này trên GUI, chỉ cần đặt slot của chúng thành -1.
 ControlItems:
-  #This item is used to display the user's storage information:
+  #Vật phẩm này được sử dụng để hiển thị thông tin kho của người dùng:
   About:
-    #For those who prefer to use custom models from ItemsAdder (or Oraxen),
-    #use this option to specify a model.
-    #Format: 'Oraxen:<id>' or 'IA:<namespaceId>'
-    # * If this option is used, it means that: Material and Data cannot be used.
-    # * Remember to remove the 'CustomModelData' option first.
-    # * Leave it blank will disable this feature.
-    Model: '' #May not need to configure.
+    #Đối với những ai muốn sử dụng model tùy chỉnh từ ItemsAdder (hoặc Oraxen),
+    #sử dụng tùy chọn này để chỉ định một model.
+    #Định dạng: 'Oraxen:<id>' hoặc 'IA:<namespaceId>'
+    # * Nếu tùy chọn này được sử dụng, có nghĩa là: Material và Data không thể được sử dụng.
+    # * Hãy nhớ xóa tùy chọn 'CustomModelData' trước.
+    # * Để trống sẽ tắt tính năng này.
+    Model: '' #Có thể không cần cấu hình.
     Material: 'PAPER'
-    Amount: 1 #May not need to configure.
-    Data: 0 #May not need to configure.
-    #Using 'Texture' option if you want to display the head texture (requires Material is PLAYER_HEAD):
-    #Texture: '<value>' #Can be found at: https://minecraft-heads.com/ (Value field).
-    #Texture: 'hdb-<id>' #Using for HeadDatabase plugin.
+    Amount: 1 #Có thể không cần cấu hình.
+    Data: 0 #Có thể không cần cấu hình.
+    #Sử dụng tùy chọn 'Texture' nếu bạn muốn hiển thị texture head (yêu cầu Material là PLAYER_HEAD):
+    #Texture: '<value>' #Có thể tìm thấy tại: https://minecraft-heads.com/ (trường Value).
+    #Texture: 'hdb-<id>' #Sử dụng cho plugin HeadDatabase.
     Texture: '%player%'
-    CustomModelData: 0 #Can only be used on the server version 1.14+. May not need to configure.
-    Name: '#dcdde1ᴘʟᴀʏᴇʀ sᴛᴏʀᴀɢᴇ ɪɴꜰᴏʀᴍᴀᴛɪᴏɴ' #May not need to configure.
-    Lore: #May not need to configure.
+    CustomModelData: 0 #Chỉ có thể sử dụng trên phiên bản server 1.14+. Có thể không cần cấu hình.
+    Name: '&f&lThông tin kho đồ' #Có thể không cần cấu hình.
+    Lore: #Có thể không cần cấu hình.
     - ''
-    - '&7+ Owner: &b{player}' #Or you can use {player} to display the player's real name.
+    - '&7+ Chủ sở hữu: &b{player}' #Hoặc bạn có thể sử dụng {player} để hiển thị tên thật của người chơi.
     - ''
-    - '&7+ Status: &r{status}'
+    - '&7+ Trạng thái: &r{status}'
     - ''
-    - '&7+ Space: &e{space}'
+    - '&7+ Dung lượng: &e{space}'
     - ''
-    - '&7+ Used space: &f{used_space} &7/ &c{used_percent}'
+    - '&7+ Đã sử dụng: &f{used_space} &7/ &c{used_percent}'
     - ''
-    - '&7+ Free space: &f{free_space} &7/ &c{free_percent}'
+    - '&7+ Còn trống: &f{free_space} &7/ &c{free_percent}'
     - ''
-    - '&8[&6s.ᴄʟɪᴄᴋ&8] &7Cleanup your filter.'
+    - '&8[&6Click&8] &7Dọn dẹp bộ lọc của bạn.'
     Slot: 50
-  #Back to previous page:
+  #Về trang trước:
   PreviousPage:
     Material: 'ARROW'
-    Name: '&8[&6ᴄʟɪᴄᴋ&8] #dcdde1ᴘʀᴇᴠɪᴏᴜs ᴘᴀɢᴇ'
+    Name: '&8[&6←&8] &fTrang trước'
     Lore:
-    - '&7ᴄᴜʀʀᴇɴᴛ ᴘᴀɢᴇ: &f{page}&7/&c{max_pages}'
+    - '&7Trang hiện tại: &f{page}&7/&c{max_pages}'
     Slot: 48
-  #Go to next page:
+  #Đến trang tiếp theo:
   NextPage:
     Material: 'ARROW'
-    Name: '&8[&6ᴄʟɪᴄᴋ&8] #dcdde1ɴᴇxᴛ ᴘᴀɢᴇ'
+    Name: '&8[&6→&8] &fTrang sau'
     Lore:
-    - '&7ᴄᴜʀʀᴇɴᴛ ᴘᴀɢᴇ: &f{page}&7/&c{max_pages}'
+    - '&7Trang hiện tại: &f{page}&7/&c{max_pages}'
     Slot: 52
 
 
-  #Switching button between GUIs:
+  #Nút chuyển đổi giữa các GUI:
   SwitchGui:
     Material: 'CHEST_MINECART'
-    Name: '#dcdde1sᴡɪᴛᴄʜ ᴛᴏ ᴏᴛʜᴇʀ sᴛᴏʀᴀɢᴇ'
+    Name: '&fChuyển đổi giao diện kho'
     Lore:
     - ''
-    - '&8 ● &7Partners'
-    - '&2→ &aFilter'
-    - '&8 ● &7Storage'
-    - '&8 ● &7Selling'
+    - '&8 ◼ &7Đối tác'
+    - '&2 ▶ &aBộ lọc'
+    - '&8 ◼ &7Kho đồ'
+    - '&8 ◼ &7Bán hàng'
     - ''
-    - '&8[&6ʟ.ᴄʟɪᴄᴋ&8] #dcdde1ɴᴇxᴛ sᴛᴏʀᴀɢᴇ'
-    - '&8[&6ʀ.ᴄʟɪᴄᴋ&8] #dcdde1ᴘʀᴇᴠ. sᴛᴏʀᴀɢᴇ'
+    - '&8[&6R.Click&8] &fChuyển giao diện'
+    - '&8[&6L.Click&8] &fMở kho đồ'
     Slot: 49
 
-  #Sorting items by material:
+  #Sắp xếp vật phẩm theo material:
   SortByMaterial:
     Material: 'BOOK'
-    Name: '#dcdde1sᴏʀᴛ sᴛᴏʀᴀɢᴇ ᴄᴏɴᴛᴇɴᴛ'
+    Name: '&fSắp xếp kho đồ'
     Lore:
     - ''
-    - '&2→ &aBy material'
-    - '&8 ● &7By name'
-    - '&8 ● &7By quantity'
+    - '&2 ▶ &aTheo vật phẩm'
+    - '&8 ◼ &7Theo tên'
+    - '&8 ◼ &7Theo số lượng'
     - ''
-    - '&8[&6ʟ.ᴄʟɪᴄᴋ&8] #dcdde1ɴᴇxᴛ ꜰɪʟᴛᴇʀ'
-    - '&8[&6ʀ.ᴄʟɪᴄᴋ&8] #dcdde1ᴘʀᴇᴠ. ꜰɪʟᴛᴇʀ'
-    - '&8[&6s.ᴄʟɪᴄᴋ&8] #dcdde1ʀᴇᴠᴇʀsᴇ ꜰɪʟᴛᴇʀ'
+    - '&8[&6R.Click&8] &fChuyển chế độ'
+    - '&8[&6L.Click&8] &fSắp xếp lại'
+    - '&8[&6Shift&8] &fĐặt mặc định'
     Slot: 51
-  #Sorting items by name:
+  #Sắp xếp vật phẩm theo tên:
   SortByName:
     Material: 'BOOK'
-    Name: '#dcdde1sᴏʀᴛ sᴛᴏʀᴀɢᴇ ᴄᴏɴᴛᴇɴᴛ'
+    Name: '&fSắp xếp kho đồ'
     Lore:
     - ''
-    - '&8 ● &7By material'
-    - '&2→ &aBy name'
-    - '&8 ● &7By quantity'
+    - '&8 ◼ &7Theo vật phẩm'
+    - '&2 ▶ &aTheo tên'
+    - '&8 ◼ &7Theo số lượng'
     - ''
-    - '&8[&6ʟ.ᴄʟɪᴄᴋ&8] #dcdde1ɴᴇxᴛ ꜰɪʟᴛᴇʀ'
-    - '&8[&6ʀ.ᴄʟɪᴄᴋ&8] #dcdde1ᴘʀᴇᴠ. ꜰɪʟᴛᴇʀ'
-    - '&8[&6s.ᴄʟɪᴄᴋ&8] #dcdde1ʀᴇᴠᴇʀsᴇ ꜰɪʟᴛᴇʀ'
+    - '&8[&6R.Click&8] &fChuyển chế độ'
+    - '&8[&6L.Click&8] &fSắp xếp lại'
+    - '&8[&6Shift&8] &fĐặt mặc định'
     Slot: 51
-  #Sorting items by quantity:
+  #Sắp xếp vật phẩm theo số lượng:
   SortByQuantity:
     Material: 'BOOK'
-    Name: '#dcdde1sᴏʀᴛ sᴛᴏʀᴀɢᴇ ᴄᴏɴᴛᴇɴᴛ'
+    Name: '&fSắp xếp kho đồ'
     Lore:
     - ''
-    - '&8 ● &7By material'
-    - '&8 ● &7By name'
-    - '&2→ &aBy quantity'
+    - '&8 ◼ &7Theo vật phẩm'
+    - '&8 ◼ &7Theo tên'
+    - '&2 ▶ &aTheo số lượng'
     - ''
-    - '&8[&6ʟ.ᴄʟɪᴄᴋ&8] #dcdde1ɴᴇxᴛ ꜰɪʟᴛᴇʀ'
-    - '&8[&6ʀ.ᴄʟɪᴄᴋ&8] #dcdde1ᴘʀᴇᴠ. ꜰɪʟᴛᴇʀ'
-    - '&8[&6s.ᴄʟɪᴄᴋ&8] #dcdde1ʀᴇᴠᴇʀsᴇ ꜰɪʟᴛᴇʀ'
+    - '&8[&6R.Click&8] &fChuyển chế độ'
+    - '&8[&6L.Click&8] &fSắp xếp lại'
+    - '&8[&6Shift&8] &fĐặt mặc định'
     Slot: 51
     
-  #This item is used to add new items to the filter:
+  #Vật phẩm này được sử dụng để thêm vật phẩm mới vào bộ lọc:
   NewItemButton:
     Material: EMERALD
     Name: '&a&lThêm Vật Phẩm Mới'
@@ -154,13 +154,13 @@ ControlItems:
       - '&f- Nông sản và hạt giống'
       - '&f- Vật phẩm từ quái vật'
       - ''
-      - '&8[&6Nhấp chuột&8] &7để mở giao diện thêm vật phẩm'
-    #Position of this item on the GUI:
+      - '&8[&6Nhấp chuột&8] &7Để mở giao diện thêm vật phẩm'
+    #Vị trí của vật phẩm này trên GUI:
     Slot: 46
 
-#These are decorative items, which will make your GUI more beautiful!
-#You can add/delete items in this section.
-# * You can only add "commands" in this section.
+#Đây là những vật phẩm trang trí, sẽ làm cho GUI của bạn đẹp hơn!
+#Bạn có thể thêm/xóa vật phẩm trong phần này.
+# * Bạn chỉ có thể thêm "commands" trong phần này.
 DecorateItems:
   border:
     Material: 'BLACK_STAINED_GLASS_PANE'
