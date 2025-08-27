@@ -140,5 +140,6 @@ FAIL:
   not-convertible-to-block: '{prefix}§c§lVật phẩm §e{item} §c§lkhông thể chuyển đổi thành khối!'
   not-convertible-to-ore: '{prefix}§c§lVật phẩm §e{item} §c§lkhông thể chuyển đổi thành khoáng sản!'
   not-enough-to-convert: '{prefix}§cNgười chơi §e{player} §ckhông có đủ §r{item} §c(hiện có: {quantity}) để chuyển đổi!'
+  item-filter-disabled: '{prefix}§cKhông thể chuyển đổi vật phẩm §r{item} §ccho người chơi §e{player} §cvì bộ lọc của vật phẩm đang tắt!'
   add-random-failed: '{prefix}§cThêm số lượng ngẫu nhiên thất bại! Kho có thể đã đầy.'
 

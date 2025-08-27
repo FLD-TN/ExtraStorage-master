@@ -134,7 +134,7 @@ public class ItemListener extends BaseListener {
 
         // Kiểm tra xem item có trong filter không
         String itemKey = ItemUtil.toMaterialKey(item);
-        boolean isFiltered = storage.getFilteredItems().containsKey(itemKey);
+        boolean isFiltered = ExtraStorage.isFilterEnabled() && storage.getFilteredItems().containsKey(itemKey);
 
         // Skip nếu storage full
         if (storage.isMaxSpace())

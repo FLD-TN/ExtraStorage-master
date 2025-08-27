@@ -9,7 +9,7 @@ import me.hsgamer.extrastorage.data.log.LogManager;
 import me.hsgamer.extrastorage.configs.*;
 import me.hsgamer.extrastorage.hooks.placeholder.ESPlaceholder;
 import me.hsgamer.extrastorage.listeners.*;
-import me.hsgamer.extrastorage.manager.ConfigManager;
+import me.hsgamer.extrastorage.configs.ConfigManager;
 import me.hsgamer.extrastorage.metrics.PluginMetrics;
 import org.bukkit.Bukkit;
 import org.bukkit.plugin.java.JavaPlugin;

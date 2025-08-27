@@ -164,6 +164,22 @@ public class PickupListener implements Listener {
         if (!storage.canStore(item))
             return;
 
+        // Kiểm tra xem global filter có bật không và item có được lọc không
+        if (!ExtraStorage.isFilterEnabled()) {
+            // Nếu global filter tắt, chỉ nhặt item vào kho khi hành trang đầy
+            if (!isInventoryFull(player)) {
+                Debug.log("[PickupListener] Global filter is disabled and inventory is not full, skipping");
+                return;
+            }
+        } else {
+            // Nếu global filter bật, kiểm tra item có trong filter không
+            String itemKey = item.getType().name();
+            if (!storage.getFilteredItems().containsKey(itemKey) && !isInventoryFull(player)) {
+                Debug.log("[PickupListener] Item is not filtered and inventory is not full, skipping");
+                return;
+            }
+        }
+
         // Kiểm tra giới hạn kho chỉ khi item có thể được lưu trữ
         if (storage.isMaxSpace())
             return;
@@ -232,5 +248,15 @@ public class PickupListener implements Listener {
         int getAmount(EntityPickupItemEvent event, Item entity, ItemStack item);
 
         void applyAmount(Item entity, ItemStack item, int amount);
+    }
+    
+    /**
+     * Kiểm tra xem hành trang của người chơi có đầy không
+     * 
+     * @param player Người chơi cần kiểm tra
+     * @return true nếu đầy, false nếu còn chỗ trống
+     */
+    private boolean isInventoryFull(Player player) {
+        return player.getInventory().firstEmpty() == -1;
     }
 }

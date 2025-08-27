@@ -73,6 +73,14 @@ public final class BlockToCmd extends CommandListener {
 
         Optional<Item> oreItemOptional = storage.getItem(oreMaterialKey);
         long currentOreAmount = oreItemOptional.map(Item::getQuantity).orElse(0L);
+        
+        // Check if the item has filter disabled
+        if (oreItemOptional.isPresent() && !oreItemOptional.get().isFiltered()) {
+            context.sendMessage(Message.getMessage("FAIL.item-filter-disabled")
+                    .replaceAll(PLAYER_REGEX, targetPlayer.getName())
+                    .replaceAll(ITEM_REGEX, oreMaterial.name()));
+            return;
+        }
 
         if (currentOreAmount < 9) {
             context.sendMessage(Message.getMessage("FAIL.not-enough-to-convert")

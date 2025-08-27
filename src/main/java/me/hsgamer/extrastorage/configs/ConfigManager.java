@@ -3,11 +3,6 @@ package me.hsgamer.extrastorage.configs;
 import me.hsgamer.extrastorage.ExtraStorage;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.configuration.file.YamlConfiguration;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.io.IOException;
-import java.nio.charset.StandardCharsets;
-
 import java.io.File;
 import java.util.HashMap;
 import java.util.Map;
@@ -15,41 +10,51 @@ import java.util.Map;
 public class ConfigManager {
     private final ExtraStorage plugin;
     private final Map<String, FileConfiguration> guiConfigs = new HashMap<>();
-
-    private Setting setting;
+    private final Setting setting;
+    private final MaterialTypeConfig materialTypeConfig;
 
     public ConfigManager(ExtraStorage plugin) {
         this.plugin = plugin;
         this.setting = new Setting(plugin);
+        this.materialTypeConfig = MaterialTypeConfig.getInstance(plugin);
         reload();
     }
 
+    public Setting getSetting() {
+        return setting;
+    }
+
+    public MaterialTypeConfig getMaterialTypeConfig() {
+        return materialTypeConfig;
+    }
+
     public void reload() {
-        // Save default config.yml
+        // Save default config.yml and ensure data folder
         plugin.saveDefaultConfig();
-        // Ensure messages.yml exists and load with defaults
+        plugin.getDataFolder().mkdirs();
+
+        // Setup settings
+        setting.setup();
+
+        // Process messages.yml
+        plugin.saveResource("messages.yml", false);
         File messageFile = new File(plugin.getDataFolder(), "messages.yml");
         if (!messageFile.exists()) {
-            plugin.saveResource("messages.yml", false);
-        }
-        // Load user messages
-        FileConfiguration messageConfig = YamlConfiguration.loadConfiguration(messageFile);
-        // Load default messages from jar and apply defaults
-        InputStream defStream = plugin.getResource("messages.yml");
-        if (defStream != null) {
-            try (InputStreamReader reader = new InputStreamReader(defStream, StandardCharsets.UTF_8)) {
-                YamlConfiguration defConfig = YamlConfiguration.loadConfiguration(reader);
-                messageConfig.setDefaults(defConfig);
-                messageConfig.options().copyDefaults(true);
-                messageConfig.save(messageFile);
-            } catch (IOException e) {
-                plugin.getLogger().severe("Failed to load default messages: " + e.getMessage());
+            plugin.getLogger().warning("messages.yml file not found! Creating a new one...");
+            try {
+                messageFile.createNewFile();
+            } catch (Exception e) {
+                plugin.getLogger().severe("Failed to create messages.yml: " + e.getMessage());
             }
         }
-        // Initialize messages
+        FileConfiguration messageConfig = YamlConfiguration.loadConfiguration(messageFile);
         Message.init(messageConfig);
-        plugin.saveResource("worth.yml", false);
 
+        // Load material types
+        materialTypeConfig.loadConfig();
+
+        // Ensure worth.yml is copied
+        plugin.saveResource("worth.yml", false);
 
         // Xóa cache của GuiConfig để đảm bảo tải lại từ file
         me.hsgamer.extrastorage.gui.config.GuiConfig.clearCache();
@@ -64,14 +69,21 @@ public class ConfigManager {
     }
 
     private void saveDefaultGuis() {
-        plugin.saveResource("gui/add_item_to_storage.yml", false);
-        plugin.saveResource("gui/confirm_remove_partner.yml", false);
-        plugin.saveResource("gui/filter.yml", false);
-        plugin.saveResource("gui/partner_request.yml", false);
-        plugin.saveResource("gui/partner.yml", false);
-        plugin.saveResource("gui/sell.yml", false);
-        plugin.saveResource("gui/storage.yml", false);
-        plugin.saveResource("gui/whitelist.yml", false);
+        try {
+            plugin.saveResource("gui/add_item_to_storage.yml", false);
+            plugin.saveResource("gui/confirm_remove_partner.yml", false);
+            plugin.saveResource("gui/confirm_unfilter.yml", false);
+            plugin.saveResource("gui/filter_manager.yml", false);
+            plugin.saveResource("gui/filter.yml", false);
+            plugin.saveResource("gui/partner_request.yml", false);
+            plugin.saveResource("gui/partner.yml", false);
+            plugin.saveResource("gui/sell.yml", false);
+            plugin.saveResource("gui/storage.yml", false);
+            plugin.saveResource("gui/whitelist.yml", false);
+        } catch (Exception e) {
+            plugin.getLogger().severe("Failed to save GUI files: " + e.getMessage());
+            e.printStackTrace();
+        }
     }
 
     private void loadGuiConfigs() {

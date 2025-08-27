@@ -49,6 +49,19 @@ public class PlayerDropListener implements Listener {
         if (!storage.canStore(itemStack)) {
             return;
         }
+        
+        // Kiểm tra tính năng bộ lọc toàn cục
+        if (!ExtraStorage.isFilterEnabled()) {
+            // Nếu bộ lọc toàn cục tắt, chỉ tự động lấy item khi inventory đã đầy
+            // (Không cần kiểm tra vì đã kiểm tra ở trên)
+        } else {
+            // Nếu bộ lọc toàn cục bật, kiểm tra item có trong filter không
+            String itemKey = itemStack.getType().name();
+            if (!storage.getFilteredItems().containsKey(itemKey)) {
+                // Item không có trong filter, bỏ qua
+                return;
+            }
+        }
 
         int amount = itemStack.getAmount();
         long freeSpace = storage.getFreeSpace();
