@@ -8,6 +8,7 @@ YesItem:
   Name: '&aXác nhận xoá khỏi bộ lọc'
   Lore:
     - ''
+    - '&c&lCHÚ Ý: Việc này sẽ xoá hoàn toàn vật phẩm khỏi kho chứa!'
     - '&7Click để xác nhận xoá vật phẩm này khỏi bộ lọc.'
   Slot: 12
 

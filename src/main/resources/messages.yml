@@ -99,6 +99,7 @@ WARN:
   confirm-cleanup: '{prefix}§6Nhấp lại để xác nhận dọn dẹp!'
   confirm-filter: '{prefix}§6Nhấp lại để xác nhận thêm vào bộ lọc!'
   confirm-unfilter: '{prefix}§6Nhấp lại để xác nhận xóa khỏi bộ lọc!'
+  item-unfiltered: '{prefix}§aĐã xóa vật phẩm §e{item} §akhỏi kho chứa!'
   Stored:
     ActionBar: '§f+{amount} §r{item} §7| §e/kho §ađể mở kho chứa'
     Filtered: '{prefix}§aĐã tự động thêm §e{amount}x §r{item} §avào kho (item đã lọc)!'
@@ -124,6 +125,7 @@ FAIL:
   filter-error: '{prefix}§c§lCó lỗi khi thêm vào bộ lọc!'
   invalid-filter: '{prefix}§c§lBộ lọc không hợp lệ!'
   filter-locked: '{prefix}§c§lBạn không có quyền sử dụng bộ lọc!'
+  filter-disabled: '{prefix}§c§lTính năng bộ lọc đã tạm thời bị vô hiệu hóa!'
   not-enough-item: '{prefix}§cBạn (hoặc đối tác của bạn) không có đủ §r{item} §cđể làm điều đó!'
   not-enough-item-in-inventory: '{prefix}§cBạn không có đủ §r{item} §ctrong hành trang!'
   item-not-filtered: '{prefix}§cBạn không thể chuyển những vật phẩm không có trong bộ lọc vào kho chứa!'

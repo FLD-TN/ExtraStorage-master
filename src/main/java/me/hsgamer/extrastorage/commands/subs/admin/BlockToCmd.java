@@ -72,15 +72,17 @@ public final class BlockToCmd extends CommandListener {
         String blockMaterialKey = blockMaterial.name();
 
         Optional<Item> oreItemOptional = storage.getItem(oreMaterialKey);
-        long currentOreAmount = oreItemOptional.map(Item::getQuantity).orElse(0L);
-        
-        // Check if the item has filter disabled
-        if (oreItemOptional.isPresent() && !oreItemOptional.get().isFiltered()) {
+
+        // Nếu item không tồn tại hoặc filter đã tắt, không cho phép chuyển đổi
+        if (!oreItemOptional.isPresent() || !oreItemOptional.get().isFiltered()) {
             context.sendMessage(Message.getMessage("FAIL.item-filter-disabled")
                     .replaceAll(PLAYER_REGEX, targetPlayer.getName())
                     .replaceAll(ITEM_REGEX, oreMaterial.name()));
             return;
         }
+
+        // Lấy số lượng hiện tại
+        long currentOreAmount = oreItemOptional.get().getQuantity();
 
         if (currentOreAmount < 9) {
             context.sendMessage(Message.getMessage("FAIL.not-enough-to-convert")
@@ -90,11 +92,64 @@ public final class BlockToCmd extends CommandListener {
             return;
         }
 
+        // Thêm kiểm tra bổ sung để đảm bảo số lượng vật phẩm
+        if (currentOreAmount <= 0) {
+            context.sendMessage(Message.getMessage("FAIL.not-enough-to-convert")
+                    .replaceAll(PLAYER_REGEX, targetPlayer.getName())
+                    .replaceAll(ITEM_REGEX, oreMaterial.name())
+                    .replaceAll(QUANTITY_REGEX, "0"));
+            return;
+        }
+
         long blocksToCraft = currentOreAmount / 9;
+        if (blocksToCraft <= 0) {
+            context.sendMessage(Message.getMessage("FAIL.not-enough-to-convert")
+                    .replaceAll(PLAYER_REGEX, targetPlayer.getName())
+                    .replaceAll(ITEM_REGEX, oreMaterial.name())
+                    .replaceAll(QUANTITY_REGEX, String.valueOf(currentOreAmount)));
+            return;
+        }
+
         long oreToRemove = blocksToCraft * 9;
 
+        // Kiểm tra một lần nữa xem vật phẩm có tồn tại và số lượng có đúng không
+        Optional<Item> checkItem = storage.getItem(oreMaterialKey);
+        if (!checkItem.isPresent() || !checkItem.get().isFiltered() || checkItem.get().getQuantity() < oreToRemove) {
+            context.sendMessage(Message.getMessage("FAIL.not-enough-to-convert")
+                    .replaceAll(PLAYER_REGEX, targetPlayer.getName())
+                    .replaceAll(ITEM_REGEX, oreMaterial.name())
+                    .replaceAll(QUANTITY_REGEX, String.valueOf(currentOreAmount)));
+            return;
+        }
+
+        // DEBUG: Log trước khi chuyển đổi
+        instance.getLogger().info("[BlockTo] Converting " + oreToRemove + " " + oreMaterialKey + " to " + blocksToCraft
+                + " " + blockMaterialKey + " for " + playerName);
+
         storage.subtract(oreMaterialKey, oreToRemove);
+
+        // Kiểm tra sau khi subtract
+        Optional<Item> afterSubtract = storage.getItem(oreMaterialKey);
+        instance.getLogger().info("[BlockTo] After subtract - " + oreMaterialKey + ": "
+                + (afterSubtract.isPresent() ? afterSubtract.get().getQuantity() : 0));
+
         storage.add(blockMaterialKey, blocksToCraft);
+
+        // Kiểm tra sau khi add và verify block được thêm vào
+        Optional<Item> verifyBlock = storage.getItem(blockMaterialKey);
+        if (!verifyBlock.isPresent() || verifyBlock.get().getQuantity() < blocksToCraft) {
+            // Nếu block không được thêm đúng số lượng, hoàn lại ore
+            storage.add(oreMaterialKey, oreToRemove);
+            instance.getLogger().warning("[BlockTo] Conversion failed for " + playerName + ". Rolling back.");
+            context.sendMessage(Message.getMessage("FAIL.conversion-failed")
+                    .replaceAll(ITEM_REGEX, oreMaterial.name())
+                    .replaceAll(PLAYER_REGEX, targetPlayer.getName()));
+            return;
+        }
+
+        instance.getLogger().info("[BlockTo] After add - " + blockMaterialKey + ": "
+                + (verifyBlock.isPresent() ? verifyBlock.get().getQuantity() : 0));
+        instance.getLogger().info("[BlockTo] Conversion successful for " + playerName);
 
         context.sendMessage(Message.getMessage("SUCCESS.BlockTo.sender")
                 .replaceAll(QUANTITY_REGEX, String.valueOf(oreToRemove))

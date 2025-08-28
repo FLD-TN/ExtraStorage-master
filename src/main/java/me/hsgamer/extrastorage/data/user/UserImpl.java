@@ -14,6 +14,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
 import java.util.function.UnaryOperator;
+import java.util.function.Function;
 
 public class UserImpl {
     public static final UserImpl EMPTY = new UserImpl(Collections.emptyMap(), "", Collections.emptyMap(), 0, true);
@@ -24,7 +25,8 @@ public class UserImpl {
     public final long space;
     public final boolean status;
 
-    private UserImpl(Map<UUID, Long> partners, String texture, Map<String, ItemImpl> items, long space, boolean status) {
+    private UserImpl(Map<UUID, Long> partners, String texture, Map<String, ItemImpl> items, long space,
+            boolean status) {
         this.partners = partners;
         this.texture = texture;
         this.items = items;
@@ -37,7 +39,8 @@ public class UserImpl {
                 .constructor(() -> EMPTY)
                 .entry(new BooleanSqlValueConverter("status"), user -> user.status, UserImpl::withStatus)
                 .entry(new StringSqlValueConverter("texture", "TINYTEXT"), user -> user.texture, UserImpl::withTexture)
-                .entry(new NumberSqlValueConverter<>("space", false, Number::longValue), user -> user.space, UserImpl::withSpace)
+                .entry(new NumberSqlValueConverter<>("space", false, Number::longValue), user -> user.space,
+                        UserImpl::withSpace)
                 .entry(
                         new StringSqlValueConverter("partners", isMySql ? "LONGTEXT" : "TEXT"),
                         user -> {
@@ -56,14 +59,14 @@ public class UserImpl {
                                 partners.put(uuid, timestamp);
                             });
                             return user.withPartners(partners);
-                        }
-                )
+                        })
                 .entry(
                         new StringSqlValueConverter("filter", isMySql ? "LONGTEXT" : "TEXT"),
                         user -> {
                             JsonObject jsonObject = new JsonObject();
                             for (Map.Entry<String, ItemImpl> entry : user.items.entrySet()) {
-                                if (!entry.getValue().filtered) continue;
+                                if (!entry.getValue().filtered)
+                                    continue;
                                 jsonObject.addProperty(entry.getKey(), entry.getValue().quantity);
                             }
                             return jsonObject.toString();
@@ -77,14 +80,14 @@ public class UserImpl {
                                 items.put(key, ItemImpl.EMPTY.withFiltered(true).withQuantity(quantity));
                             });
                             return user.withAdditionalItems(items);
-                        }
-                )
+                        })
                 .entry(
                         new StringSqlValueConverter("unfilter", isMySql ? "LONGTEXT" : "TEXT"),
                         user -> {
                             JsonObject jsonObject = new JsonObject();
                             for (Map.Entry<String, ItemImpl> entry : user.items.entrySet()) {
-                                if (entry.getValue().filtered) continue;
+                                if (entry.getValue().filtered)
+                                    continue;
                                 jsonObject.addProperty(entry.getKey(), entry.getValue().quantity);
                             }
                             return jsonObject.toString();
@@ -98,8 +101,7 @@ public class UserImpl {
                                 items.put(key, ItemImpl.EMPTY.withFiltered(false).withQuantity(quantity));
                             });
                             return user.withAdditionalItems(items);
-                        }
-                )
+                        })
                 .build();
     }
 
@@ -145,10 +147,26 @@ public class UserImpl {
         return new UserImpl(this.partners, this.texture, Collections.unmodifiableMap(items), this.space, this.status);
     }
 
-    public UserImpl withItemModifiedIfFound(String key, UnaryOperator<ItemImpl> modifier) {
-        HashMap<String, ItemImpl> items = new HashMap<>(this.items);
-        items.computeIfPresent(key, (k, v) -> modifier.apply(v));
-        return new UserImpl(this.partners, this.texture, Collections.unmodifiableMap(items), this.space, this.status);
+    public UserImpl withItemModifiedIfFound(String key, Function<ItemImpl, ItemImpl> function) {
+        Map<String, ItemImpl> items = new HashMap<>(this.items);
+        ItemImpl current = items.get(key);
+
+        if (current != null) {
+            ItemImpl modified = function.apply(current);
+            if (modified == null) {
+                items.remove(key); // Xóa item nếu function trả về null
+            } else {
+                items.put(key, modified);
+            }
+        } else {
+            // Nếu item không tồn tại và function muốn tạo mới
+            ItemImpl newItem = function.apply(ItemImpl.EMPTY);
+            if (newItem != null) {
+                items.put(key, newItem);
+            }
+        }
+
+        return withItems(items);
     }
 
     public UserImpl withSpace(long space) {

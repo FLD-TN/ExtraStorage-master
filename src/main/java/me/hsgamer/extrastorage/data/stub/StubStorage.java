@@ -7,8 +7,11 @@ import me.hsgamer.extrastorage.api.storage.Storage;
 import me.hsgamer.extrastorage.configs.MaterialTypeConfig;
 import me.hsgamer.extrastorage.data.Constants;
 import me.hsgamer.extrastorage.data.user.ItemImpl;
+import me.hsgamer.extrastorage.hooks.placeholder.ESPlaceholder;
 import me.hsgamer.extrastorage.util.Digital;
 import me.hsgamer.extrastorage.util.ItemUtil;
+
+import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 import org.bukkit.permissions.PermissionAttachmentInfo;
 
@@ -262,55 +265,49 @@ public class StubStorage implements Storage {
             return Optional.empty();
         }
 
-        // Chuẩn hóa key để so sánh
-        String normalizedKey = normalizeKey(validKey);
-        Debug.log("[getItem] Original key: " + key + ", Valid key: " + validKey + ", Normalized key: " + normalizedKey);
+        Debug.log("[getItem] Looking for key: " + validKey);
 
-        // Kiểm tra trực tiếp nếu key chính xác có trong map
-        if (user.entry.getValue().items.containsKey(validKey)) {
-            Debug.log("[getItem] Direct key match found: " + validKey);
-            ItemImpl item = user.entry.getValue().items.get(validKey);
-            // Kiểm tra số lượng để đảm bảo item thực sự tồn tại
-            if (item.quantity > 0 || item.filtered) {
-                return Optional.of(new StubItem(this, validKey));
-            } else {
-                Debug.log("[getItem] Item exists but has zero quantity and not filtered: " + validKey);
+        // 1. Tìm kiếm CHÍNH XÁC key (exact match)
+        ItemImpl exactItem = user.entry.getValue().items.get(validKey);
+        if (exactItem != null && (exactItem.quantity > 0 || exactItem.filtered)) {
+            Debug.log("[getItem] Exact match found: " + validKey);
+            return Optional.of(new StubItem(this, validKey));
+        }
+
+        // 2. Chuẩn hóa key và tìm kiếm chính xác normalized key
+        String normalizedKey = normalizeKey(validKey);
+        for (Map.Entry<String, ItemImpl> entry : user.entry.getValue().items.entrySet()) {
+            String entryNormalized = normalizeKey(entry.getKey());
+            if (entryNormalized.equals(normalizedKey) && (entry.getValue().quantity > 0 || entry.getValue().filtered)) {
+                Debug.log("[getItem] Normalized match found: " + entry.getKey() + " for " + validKey);
+                return Optional.of(new StubItem(this, entry.getKey()));
             }
         }
 
-        // Chiến lược 1: Tìm kiếm chính xác với key đã chuẩn hóa
-        Optional<Map.Entry<String, ItemImpl>> exactMatch = user.entry.getValue().items.entrySet()
-                .stream()
-                .filter(entry -> {
-                    String entryNormalized = normalizeKey(entry.getKey());
-                    boolean matches = entryNormalized.equals(normalizedKey);
-                    // Chỉ trả về các item thực sự có trong kho (số lượng > 0 hoặc filtered)
-                    return matches && (entry.getValue().quantity > 0 || entry.getValue().filtered);
-                })
-                .findFirst();
-
-        if (exactMatch.isPresent()) {
-            Debug.log("[getItem] Found exact match: " + exactMatch.get().getKey());
-            return Optional.of(new StubItem(this, exactMatch.get().getKey()));
+        // 3. Đối với plugin items (có chứa ":") - tìm kiếm chính xác namespace
+        if (validKey.contains(":")) {
+            for (Map.Entry<String, ItemImpl> entry : user.entry.getValue().items.entrySet()) {
+                if (entry.getKey().equalsIgnoreCase(validKey)
+                        && (entry.getValue().quantity > 0 || entry.getValue().filtered)) {
+                    Debug.log("[getItem] Plugin item exact match: " + entry.getKey());
+                    return Optional.of(new StubItem(this, entry.getKey()));
+                }
+            }
+        } else {
+            // 4. Đối với vanilla items - chỉ tìm kiếm CHÍNH XÁC tên material
+            // KHÔNG dùng startsWith() để tránh namespace collision
+            for (Map.Entry<String, ItemImpl> entry : user.entry.getValue().items.entrySet()) {
+                String entryKey = entry.getKey();
+                // Chỉ so sánh với vanilla items không có namespace
+                if (!entryKey.contains(":") && entryKey.equalsIgnoreCase(validKey) &&
+                        (entry.getValue().quantity > 0 || entry.getValue().filtered)) {
+                    Debug.log("[getItem] Vanilla item exact match: " + entry.getKey());
+                    return Optional.of(new StubItem(this, entry.getKey()));
+                }
+            }
         }
 
-        // Chiến lược 2: Tìm kiếm với phần material chính (không kèm data)
-        String baseKey = validKey.split(":", 2)[0].toUpperCase(Locale.ROOT);
-        Optional<Map.Entry<String, ItemImpl>> baseMatch = user.entry.getValue().items.entrySet()
-                .stream()
-                .filter(entry -> {
-                    boolean startsWith = entry.getKey().startsWith(baseKey);
-                    // Chỉ trả về các item thực sự có trong kho (số lượng > 0 hoặc filtered)
-                    return startsWith && (entry.getValue().quantity > 0 || entry.getValue().filtered);
-                })
-                .findFirst();
-
-        if (baseMatch.isPresent()) {
-            Debug.log("[getItem] Found base match: " + baseMatch.get().getKey() + " for base key: " + baseKey);
-            return Optional.of(new StubItem(this, baseMatch.get().getKey()));
-        }
-
-        Debug.log("[getItem] No match found for key: " + key);
+        Debug.log("[getItem] No match found for: " + validKey);
         return Optional.empty();
     }
 
@@ -324,37 +321,35 @@ public class StubStorage implements Storage {
      * @return Khóa đã chuẩn hóa
      */
     private String normalizeKey(String key) {
-        // Xử lý null và rỗng
         if (key == null || key.isEmpty()) {
             return "";
         }
 
         try {
-            // Xử lý các ký tự không cần thiết và khoảng trắng
             key = key.trim();
 
-            // Loại bỏ hậu tố ":0" vì nó không có ý nghĩa phân biệt
+            // Xử lý đặc biệt cho vanilla materials - không chuẩn hóa nếu không có namespace
+            if (!key.contains(":")) {
+                return key.toUpperCase(Locale.ROOT);
+            }
+
             if (key.endsWith(":0")) {
                 key = key.substring(0, key.length() - 2);
             }
 
-            // Tách thành các phần để xử lý riêng
             String[] parts = key.split(":", 2);
             String type = parts[0].toUpperCase(Locale.ROOT);
 
             if (parts.length == 1) {
-                return type; // Chỉ trả về phần material đã viết hoa
+                return type;
             }
 
             // Xử lý các plugin item đặc biệt
-            // Mở rộng danh sách plugin được hỗ trợ
             switch (type) {
                 case "IA":
-                    return "ITEMSADDER:" + parts[1].toLowerCase();
                 case "ITEMSADDER":
                     return "ITEMSADDER:" + parts[1].toLowerCase();
                 case "ORX":
-                    return "ORAXEN:" + parts[1].toLowerCase();
                 case "ORAXEN":
                     return "ORAXEN:" + parts[1].toLowerCase();
                 case "NEXO":
@@ -369,15 +364,13 @@ public class StubStorage implements Storage {
                 case "MM":
                     return "MYTHICMOBS:" + parts[1].toLowerCase();
                 default:
-                    // Với các item thông thường có data value, loại bỏ data nếu là 0
                     if (parts[1].equals("0")) {
                         return type;
                     }
                     return type + ":" + parts[1];
             }
         } catch (Exception e) {
-            // Nếu có lỗi, trả về key sau khi viết hoa để vẫn có thể xử lý
-            Debug.log("[normalizeKey] Error processing key: " + key + " - " + e.getMessage());
+            Debug.log("[normalizeKey] Error: " + key + " - " + e.getMessage());
             return key.toUpperCase(Locale.ROOT);
         }
     }
@@ -441,6 +434,14 @@ public class StubStorage implements Storage {
 
         // Reset cache khi thêm item mới
         resetUsedSpaceCache();
+        // Clear placeholder cache khi có thay đổi
+        Bukkit.getScheduler().runTask(instance, () -> {
+            try {
+                ESPlaceholder.clearCacheForPlayer(user.getUUID());
+            } catch (Exception e) {
+                // Ignore if PlaceholderAPI is not loaded
+            }
+        });
     }
 
     @Override
@@ -471,10 +472,15 @@ public class StubStorage implements Storage {
                 .findFirst();
 
         if (exactMatch.isPresent()) {
-            // Tìm thấy chính xác
-            Debug.log("[unfilter] Found exact match: " + exactMatch.get().getKey());
+            // Tìm thấy chính xác - xóa hoàn toàn item thay vì chỉ đặt filtered = false
+            Debug.log("[unfilter] Found exact match, removing completely: " + exactMatch.get().getKey());
             String actualKey = exactMatch.get().getKey();
-            user.entry.setValue(u -> u.withItemModifiedIfFound(actualKey, i -> i.withFiltered(false)));
+            user.entry.setValue(u -> {
+                Map<String, ItemImpl> items = new HashMap<>(u.items);
+                items.remove(actualKey);
+                Debug.log("[unfilter] Completely removed item with key: " + actualKey);
+                return u.withItems(items);
+            });
             return;
         }
 
@@ -485,24 +491,59 @@ public class StubStorage implements Storage {
                 .findFirst();
 
         if (baseMatch.isPresent()) {
-            // Tìm thấy với phần material cơ bản
-            Debug.log("[unfilter] Found base match: " + baseMatch.get().getKey());
+            // Tìm thấy với phần material cơ bản - xóa hoàn toàn item
+            Debug.log("[unfilter] Found base match, removing completely: " + baseMatch.get().getKey());
             String similarKey = baseMatch.get().getKey();
-            user.entry.setValue(u -> u.withItemModifiedIfFound(similarKey, i -> i.withFiltered(false)));
+            user.entry.setValue(u -> {
+                Map<String, ItemImpl> items = new HashMap<>(u.items);
+                items.remove(similarKey);
+                Debug.log("[unfilter] Completely removed item with key: " + similarKey);
+                return u.withItems(items);
+            });
             return;
         }
 
-        // 3. Thử với key ban đầu nếu không tìm thấy
+        // 3. Thử với key ban đầu nếu không tìm thấy - xóa hoàn toàn item
         Debug.log("[unfilter] Using original key as last resort: " + validKey);
-        user.entry.setValue(u -> u.withItemModifiedIfFound(validKey, i -> i.withFiltered(false)));
+        user.entry.setValue(u -> {
+            Map<String, ItemImpl> items = new HashMap<>(u.items);
+            items.remove(validKey);
+            Debug.log("[unfilter] Attempted to remove item with key: " + validKey);
+            return u.withItems(items);
+        });
+
+        // Reset cache khi xóa item
+        resetUsedSpaceCache();
+        // Clear placeholder cache khi có thay đổi
+        Bukkit.getScheduler().runTask(instance, () -> {
+            try {
+                ESPlaceholder.clearCacheForPlayer(user.getUUID());
+            } catch (Exception e) {
+                // Ignore if PlaceholderAPI is not loaded
+            }
+        });
     }
 
     @Override
     public void add(Object key, long quantity) {
         String validKey = ItemUtil.toMaterialKey(key);
-        user.entry.setValue(u -> u.withItemModifiedIfFound(validKey, i -> i.withQuantity(i.quantity + quantity)));
+        user.entry.setValue(u -> u.withItemModifiedIfFound(validKey, i -> {
+            // Nếu item không tồn tại hoặc đã bị xóa, tạo mới với filtered=true
+            if (i == null) {
+                return ItemImpl.EMPTY.withQuantity(quantity).withFiltered(true);
+            }
+            return i.withQuantity(i.quantity + quantity);
+        }));
+
         // Reset cache khi thêm item
         resetUsedSpaceCache();
+        Bukkit.getScheduler().runTask(instance, () -> {
+            try {
+                ESPlaceholder.clearCacheForPlayer(user.getUUID());
+            } catch (Exception e) {
+                // Ignore if PlaceholderAPI is not loaded
+            }
+        });
     }
 
     @Override
@@ -510,12 +551,30 @@ public class StubStorage implements Storage {
         String validKey = ItemUtil.toMaterialKey(key);
         user.entry.setValue(u -> u.withItemModifiedIfFound(validKey, i -> {
             long newQuantity = i.quantity - quantity;
-            // Reset cache khi bớt item
-            resetUsedSpaceCache();
-            if (newQuantity < 0)
-                return null;
+
+            // Nếu số lượng <= 0 VÀ filter đã tắt, thì xóa item hoàn toàn
+            if (newQuantity <= 0 && !i.filtered) {
+                return null; // Xóa item
+            }
+
+            // Nếu số lượng < 0 nhưng filter vẫn bật, đặt về 0
+            if (newQuantity < 0) {
+                newQuantity = 0;
+            }
+
             return i.withQuantity(newQuantity);
         }));
+
+        // Reset cache khi bớt item
+        resetUsedSpaceCache();
+        // Clear placeholder cache khi có thay đổi
+        Bukkit.getScheduler().runTask(instance, () -> {
+            try {
+                ESPlaceholder.clearCacheForPlayer(user.getUUID());
+            } catch (Exception e) {
+                // Ignore if PlaceholderAPI is not loaded
+            }
+        });
     }
 
     @Override
@@ -526,6 +585,14 @@ public class StubStorage implements Storage {
                 return null;
             return i.withQuantity(quantity);
         }));
+        // Clear placeholder cache khi có thay đổi
+        Bukkit.getScheduler().runTask(instance, () -> {
+            try {
+                ESPlaceholder.clearCacheForPlayer(user.getUUID());
+            } catch (Exception e) {
+                // Ignore if PlaceholderAPI is not loaded
+            }
+        });
     }
 
     @Override
@@ -563,5 +630,13 @@ public class StubStorage implements Storage {
         }
         // Clear any cached lookups
         resetUsedSpaceCache();
+        // Clear placeholder cache khi có thay đổi
+        Bukkit.getScheduler().runTask(instance, () -> {
+            try {
+                ESPlaceholder.clearCacheForPlayer(user.getUUID());
+            } catch (Exception e) {
+                // Ignore if PlaceholderAPI is not loaded
+            }
+        });
     }
 }
