@@ -23,26 +23,25 @@ public class UserImpl {
             "",
             Collections.emptyMap(),
             0,
-            true,
-            Collections.emptyMap() // THÊM: pending partner requests
-    );
+            true);
+
+    // Sử dụng biến static để lưu trữ pending requests
+    // Không lưu trong database nữa mà chỉ lưu trong bộ nhớ
+    public static final Map<UUID, Map<String, Long>> pendingPartnerRequestsMap = new ConcurrentHashMap<>();
 
     public final Map<UUID, Long> partners;
     public final String texture;
     public final Map<String, ItemImpl> items;
     public final long space;
     public final boolean status;
-    public final Map<String, Long> pendingPartnerRequests; // THÊM: pending requests
 
     private UserImpl(Map<UUID, Long> partners, String texture, Map<String, ItemImpl> items, long space,
-            boolean status, Map<String, Long> pendingPartnerRequests) { // THÊM parameter
+            boolean status) {
         this.partners = partners;
         this.texture = texture;
         this.items = items;
         this.space = space;
         this.status = status;
-        this.pendingPartnerRequests = pendingPartnerRequests != null ? new ConcurrentHashMap<>(pendingPartnerRequests)
-                : new ConcurrentHashMap<>();
     }
 
     public static SqlValueConverter<UserImpl> getConverter(boolean isMySql) {
@@ -62,7 +61,7 @@ public class UserImpl {
                             return jsonObject.toString();
                         },
                         (user, string) -> {
-                            JsonObject jsonObject = new JsonParser().parse(string).getAsJsonObject();
+                            JsonObject jsonObject = JsonParser.parseString(string).getAsJsonObject();
                             Map<UUID, Long> partners = new HashMap<>();
                             jsonObject.entrySet().forEach(entry -> {
                                 UUID uuid = UUID.fromString(entry.getKey());
@@ -83,7 +82,7 @@ public class UserImpl {
                             return jsonObject.toString();
                         },
                         (user, string) -> {
-                            JsonObject jsonObject = new JsonParser().parse(string).getAsJsonObject();
+                            JsonObject jsonObject = JsonParser.parseString(string).getAsJsonObject();
                             Map<String, ItemImpl> items = new HashMap<>();
                             jsonObject.entrySet().forEach(entry -> {
                                 String key = ItemUtil.normalizeMaterialKey(entry.getKey());
@@ -104,7 +103,7 @@ public class UserImpl {
                             return jsonObject.toString();
                         },
                         (user, string) -> {
-                            JsonObject jsonObject = new JsonParser().parse(string).getAsJsonObject();
+                            JsonObject jsonObject = JsonParser.parseString(string).getAsJsonObject();
                             Map<String, ItemImpl> items = new HashMap<>();
                             jsonObject.entrySet().forEach(entry -> {
                                 String key = ItemUtil.normalizeMaterialKey(entry.getKey());
@@ -116,39 +115,20 @@ public class UserImpl {
                 .build();
     }
 
-    // THÊM: Method for pending partner requests
+    // Các phương thức xử lý pending partner requests không lưu trong database
     public UserImpl withPendingPartnerRequests(Map<String, Long> pendingPartnerRequests) {
-        return new UserImpl(
-                this.partners,
-                this.texture,
-                this.items,
-                this.space,
-                this.status,
-                pendingPartnerRequests);
+        // Không còn cần thiết, chỉ trả về instance hiện tại
+        return this;
     }
 
     public UserImpl withPendingPartnerRequest(String username, long timestamp) {
-        Map<String, Long> newPending = new ConcurrentHashMap<>(this.pendingPartnerRequests);
-        newPending.put(username, timestamp);
-        return new UserImpl(
-                this.partners,
-                this.texture,
-                this.items,
-                this.space,
-                this.status,
-                newPending);
+        // Không còn cần thiết, chỉ trả về instance hiện tại
+        return this;
     }
 
     public UserImpl withPendingPartnerRequestRemoved(String username) {
-        Map<String, Long> newPending = new ConcurrentHashMap<>(this.pendingPartnerRequests);
-        newPending.remove(username);
-        return new UserImpl(
-                this.partners,
-                this.texture,
-                this.items,
-                this.space,
-                this.status,
-                newPending);
+        // Không còn cần thiết, chỉ trả về instance hiện tại
+        return this;
     }
 
     public UserImpl withPartners(Map<UUID, Long> partners) {
@@ -157,8 +137,7 @@ public class UserImpl {
                 this.texture,
                 this.items,
                 this.space,
-                this.status,
-                this.pendingPartnerRequests);
+                this.status);
     }
 
     public UserImpl withPartner(UUID uuid) {
@@ -169,8 +148,7 @@ public class UserImpl {
                 this.texture,
                 this.items,
                 this.space,
-                this.status,
-                this.pendingPartnerRequests);
+                this.status);
     }
 
     public UserImpl withPartnerRemoved(UUID uuid) {
@@ -181,8 +159,7 @@ public class UserImpl {
                 this.texture,
                 this.items,
                 this.space,
-                this.status,
-                this.pendingPartnerRequests);
+                this.status);
     }
 
     public UserImpl withTexture(String texture) {
@@ -191,8 +168,7 @@ public class UserImpl {
                 texture,
                 this.items,
                 this.space,
-                this.status,
-                this.pendingPartnerRequests);
+                this.status);
     }
 
     public UserImpl withItems(Map<String, ItemImpl> items) {
@@ -201,8 +177,7 @@ public class UserImpl {
                 this.texture,
                 Collections.unmodifiableMap(items),
                 this.space,
-                this.status,
-                this.pendingPartnerRequests);
+                this.status);
     }
 
     public UserImpl withAdditionalItems(Map<String, ItemImpl> additionalItems) {
@@ -213,8 +188,7 @@ public class UserImpl {
                 this.texture,
                 Collections.unmodifiableMap(items),
                 this.space,
-                this.status,
-                this.pendingPartnerRequests);
+                this.status);
     }
 
     public UserImpl withItemIfNotFound(String key, ItemImpl item) {
@@ -225,8 +199,7 @@ public class UserImpl {
                 this.texture,
                 Collections.unmodifiableMap(items),
                 this.space,
-                this.status,
-                this.pendingPartnerRequests);
+                this.status);
     }
 
     public UserImpl withItemRemoved(String key) {
@@ -237,14 +210,12 @@ public class UserImpl {
                 this.texture,
                 Collections.unmodifiableMap(items),
                 this.space,
-                this.status,
-                this.pendingPartnerRequests);
+                this.status);
     }
 
     public UserImpl withItemModifiedIfFound(String key, Function<ItemImpl, ItemImpl> function) {
-        Map<String, ItemImpl> items = new HashMap<>(this.items);
+        HashMap<String, ItemImpl> items = new HashMap<>(this.items);
         ItemImpl current = items.get(key);
-
         if (current != null) {
             ItemImpl modified = function.apply(current);
             if (modified == null) {
@@ -269,8 +240,7 @@ public class UserImpl {
                 this.texture,
                 this.items,
                 space,
-                this.status,
-                this.pendingPartnerRequests);
+                this.status);
     }
 
     public UserImpl withStatus(boolean status) {
@@ -279,7 +249,6 @@ public class UserImpl {
                 this.texture,
                 this.items,
                 this.space,
-                status,
-                this.pendingPartnerRequests);
+                this.status);
     }
 }

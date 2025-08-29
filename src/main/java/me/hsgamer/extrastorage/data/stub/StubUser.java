@@ -13,6 +13,7 @@ import org.bukkit.entity.Player;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
@@ -93,7 +94,9 @@ public class StubUser implements User {
     @Override
     public boolean hasPendingPartnerRequest(String username) {
         String key = username.toLowerCase().trim();
-        Map<String, Long> pendingRequests = entry.getValue().pendingPartnerRequests;
+        // Lấy map requests cho user này, hoặc tạo mới nếu chưa có
+        Map<String, Long> pendingRequests = UserImpl.pendingPartnerRequestsMap.computeIfAbsent(getUUID(),
+                k -> new ConcurrentHashMap<>());
 
         Long time = pendingRequests.get(key);
         if (time == null)
@@ -110,19 +113,29 @@ public class StubUser implements User {
     @Override
     public void addPendingPartnerRequest(String username) {
         String key = username.toLowerCase().trim();
-        entry.setValue(user -> user.withPendingPartnerRequest(key, System.currentTimeMillis()));
+        // Lấy map requests cho user này, hoặc tạo mới nếu chưa có
+        Map<String, Long> pendingRequests = UserImpl.pendingPartnerRequestsMap.computeIfAbsent(getUUID(),
+                k -> new ConcurrentHashMap<>());
+        // Thêm request mới
+        pendingRequests.put(key, System.currentTimeMillis());
     }
 
     @Override
     public void removePendingPartnerRequest(String username) {
         String key = username.toLowerCase().trim();
-        entry.setValue(user -> user.withPendingPartnerRequestRemoved(key));
+        // Lấy map requests cho user này, hoặc tạo mới nếu chưa có
+        Map<String, Long> pendingRequests = UserImpl.pendingPartnerRequestsMap.computeIfAbsent(getUUID(),
+                k -> new ConcurrentHashMap<>());
+        // Xóa request
+        pendingRequests.remove(key);
     }
 
     @Override
     public Collection<String> getPendingPartnerRequests() {
         long now = System.currentTimeMillis();
-        Map<String, Long> pendingRequests = entry.getValue().pendingPartnerRequests;
+        // Lấy map requests cho user này, hoặc tạo mới nếu chưa có
+        Map<String, Long> pendingRequests = UserImpl.pendingPartnerRequestsMap.computeIfAbsent(getUUID(),
+                k -> new ConcurrentHashMap<>());
 
         // Remove expired requests first
         pendingRequests.entrySet().removeIf(entry -> now - entry.getValue() >= REQUEST_EXPIRE_MS);

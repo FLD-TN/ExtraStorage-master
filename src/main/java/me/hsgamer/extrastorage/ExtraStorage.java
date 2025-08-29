@@ -201,19 +201,7 @@ public final class ExtraStorage extends JavaPlugin {
             StorageSafetyManager.cleanupStaleLocks();
             TransactionLogger.cleanupOldTransactions();
             ItemFilterService.performCacheCleanup(); // Sử dụng phương thức mới thay vì clearAllCache()
-
-            // Cleanup expired pending requests
-            cleanupExpiredPendingRequests();
         }, CLEANUP_INTERVAL, CLEANUP_INTERVAL);
-    }
-
-    // THÊM: Method để cleanup expired pending requests
-    private void cleanupExpiredPendingRequests() {
-        for (me.hsgamer.extrastorage.api.user.User user : userManager.getUsers()) {
-            // Gọi getPendingPartnerRequests() sẽ tự động remove expired requests
-            user.getPendingPartnerRequests();
-        }
-        getLogger().info("Cleaned up expired pending partner requests");
     }
 
     // ⚡ Thêm performance monitoring
