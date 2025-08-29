@@ -1,5 +1,6 @@
 package me.hsgamer.extrastorage.listeners;
 
+import me.hsgamer.extrastorage.Debug;
 import me.hsgamer.extrastorage.ExtraStorage;
 import me.hsgamer.extrastorage.api.storage.Storage;
 import me.hsgamer.extrastorage.api.user.User;
@@ -24,8 +25,8 @@ public class PlayerDropListener implements Listener {
         Player player = event.getPlayer();
         Item droppedItem = event.getItemDrop();
 
-        // Chỉ xử lý nếu túi đồ của người chơi đã đầy
-        if (player.getInventory().firstEmpty() != -1) {
+        // Kiểm tra metadata để tránh xử lý lại
+        if (droppedItem.hasMetadata("processed_by_storage")) {
             return;
         }
 
@@ -36,8 +37,7 @@ public class PlayerDropListener implements Listener {
         }
 
         User user = instance.getUserManager().getUser(player);
-        // Bỏ qua nếu người chơi không có quyền, kho đang tắt hoặc kho đã đầy
-        if (!user.hasPermission(Constants.STORAGE_PICKUP_PERMISSION) || !user.getStorage().getStatus()
+        if (user == null || !user.hasPermission(Constants.STORAGE_PICKUP_PERMISSION) || !user.getStorage().getStatus()
                 || user.getStorage().isMaxSpace()) {
             return;
         }
@@ -50,17 +50,19 @@ public class PlayerDropListener implements Listener {
             return;
         }
 
-        // Kiểm tra tính năng bộ lọc toàn cục
+        // 🔴 XÓA ĐIỀU KIỆN KIỂM TRA INVENTORY Ở ĐÂY 🔴
+        // CHỈ kiểm tra global filter và item filter
+
         if (!ExtraStorage.isFilterEnabled()) {
-            // Nếu bộ lọc toàn cục tắt, chỉ tự động lấy item khi inventory đã đầy
-            // (Không cần kiểm tra vì đã kiểm tra ở trên)
+            // Nếu global filter tắt, LUÔN nhặt vào kho
+            Debug.log("[DropListener] Global filter disabled - always pickup to storage");
         } else {
-            // Nếu bộ lọc toàn cục bật, kiểm tra item có trong filter không
+            // Nếu global filter bật, kiểm tra item có trong filter không
             String itemKey = itemStack.getType().name();
             if (!storage.getFilteredItems().containsKey(itemKey)) {
-                // Item không có trong filter, bỏ qua
-                return;
+                return; // Item không có trong filter, bỏ qua
             }
+            Debug.log("[DropListener] Item is filtered - pickup to storage: " + itemKey);
         }
 
         int amount = itemStack.getAmount();
@@ -71,20 +73,17 @@ public class PlayerDropListener implements Listener {
             return;
         }
 
-        // Tạo một bản sao của vật phẩm để thêm vào kho
+        // Thêm vật phẩm vào kho ảo
         ItemStack itemToStore = itemStack.clone();
         itemToStore.setAmount((int) maxTake);
-
-        // Thêm vật phẩm vào kho ảo
         ListenerUtil.addToStorage(player, storage, itemToStore, (int) maxTake);
 
+        // Đánh dấu item đã được xử lý
+        droppedItem.setMetadata("processed_by_storage", new org.bukkit.metadata.FixedMetadataValue(instance, true));
+
         if (maxTake >= amount) {
-            // SỬA LỖI: Thay vì hủy sự kiện, chúng ta cho nó diễn ra
-            // và ngay lập tức XÓA vật phẩm vật lý khỏi thế giới.
-            // Điều này đảm bảo vật phẩm được trừ khỏi tay người chơi mà không bị nhân đôi.
             droppedItem.remove();
         } else {
-            // Nếu kho chỉ đủ chứa một phần, giảm số lượng của vật phẩm bị vứt ra
             itemStack.setAmount(amount - (int) maxTake);
             droppedItem.setItemStack(itemStack);
         }

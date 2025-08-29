@@ -138,6 +138,11 @@
 			<scope>compile</scope>
 		</dependency>
 		<dependency>
+			<groupId>com.google.guava</groupId>
+			<artifactId>guava</artifactId>
+			<version>31.1-jre</version> <!-- Hoặc version mới nhất -->
+		</dependency>
+		<dependency>
 			<groupId>com.arcaniax</groupId>
 			<artifactId>HeadDatabase-API</artifactId>
 			<version>1.3.1</version>

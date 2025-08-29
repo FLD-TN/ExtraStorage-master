@@ -9,15 +9,24 @@ import me.hsgamer.extrastorage.data.log.LogManager;
 import me.hsgamer.extrastorage.configs.*;
 import me.hsgamer.extrastorage.hooks.placeholder.ESPlaceholder;
 import me.hsgamer.extrastorage.listeners.*;
-import me.hsgamer.extrastorage.configs.ConfigManager;
 import me.hsgamer.extrastorage.metrics.PluginMetrics;
+import me.hsgamer.extrastorage.storage.StorageBackupManager;
+import me.hsgamer.extrastorage.storage.StorageSafetyManager;
+import me.hsgamer.extrastorage.storage.TransactionLogger;
+import me.hsgamer.extrastorage.util.PerformanceOptimizer;
+import me.hsgamer.extrastorage.util.ItemFilterService;
+
+import java.util.UUID;
+
 import org.bukkit.Bukkit;
+import org.bukkit.entity.Player;
 import org.bukkit.plugin.java.JavaPlugin;
 
 public final class ExtraStorage extends JavaPlugin {
     private static ExtraStorage instance;
     private static boolean filterEnabled = true;
-    private static final long CLEANUP_INTERVAL = 20 * 60 * 30; // 30 mins
+    private static final long CLEANUP_INTERVAL = 20 * 60 * 30; // 30 phút
+    private static final long MONITORING_INTERVAL = 20 * 300; // 5 phút
 
     private boolean firstLoad = true;
     private ConfigManager configManager;
@@ -28,6 +37,8 @@ public final class ExtraStorage extends JavaPlugin {
     private Setting setting;
     private MaterialTypeConfig materialTypeConfig;
     private me.hsgamer.extrastorage.data.NotificationManager notificationManager;
+    private PerformanceOptimizer performanceOptimizer;
+    private StorageBackupManager storageBackupManager;
 
     public static ExtraStorage getInstance() {
         return instance;
@@ -39,6 +50,7 @@ public final class ExtraStorage extends JavaPlugin {
 
     public static void setFilterEnabled(boolean enabled) {
         filterEnabled = enabled;
+        ItemFilterService.clearAllCache();
     }
 
     public ConfigManager getConfigManager() {
@@ -106,6 +118,17 @@ public final class ExtraStorage extends JavaPlugin {
         logManager = new LogManager(this);
         notificationManager = new me.hsgamer.extrastorage.data.NotificationManager(this);
 
+        // Initialize performance optimizer và backup manager
+        performanceOptimizer = new PerformanceOptimizer(this);
+        storageBackupManager = new StorageBackupManager(this);
+
+        // Kiểm tra và phục hồi dữ liệu nếu phát hiện server crash
+        if (storageBackupManager.recoverFromCrash()) {
+            getLogger().info("Kiểm tra tính toàn vẹn dữ liệu hoàn tất");
+        } else {
+            getLogger().warning("Có vấn đề trong quá trình kiểm tra tính toàn vẹn dữ liệu!");
+        }
+
         // Register commands and tab completers
         PlayerCommands playerCommands = new PlayerCommands();
         getCommand("extrastorage").setExecutor(playerCommands);
@@ -134,6 +157,16 @@ public final class ExtraStorage extends JavaPlugin {
         }
 
         scheduleCleanupTask();
+        startPerformanceMonitoring();
+
+        // Bắt đầu hệ thống sao lưu tự động
+        storageBackupManager.startAutomaticBackup();
+
+        // Thay đổi thời gian auto-save từ 1 phút xuống 30 giây để đảm bảo dữ liệu được
+        // lưu thường xuyên hơn
+        if (userManager != null) {
+            getLogger().info("Đã bật chế độ tự động lưu dữ liệu thường xuyên hơn (mỗi 30 giây)");
+        }
 
         getLogger().info("=========================");
         getLogger().info("ExtraStorage v" + getDescription().getVersion());
@@ -157,15 +190,77 @@ public final class ExtraStorage extends JavaPlugin {
         getServer().getScheduler().runTaskTimer(this, () -> {
             if (userManager != null) {
                 userManager.cleanup();
+                userManager.cleanupCache(); // ⚡ Cleanup user cache
             }
+
+            // ⚡ Cleanup các component khác
+            StorageSafetyManager.cleanupStaleLocks();
+            TransactionLogger.cleanupOldTransactions();
+            ItemFilterService.clearAllCache();
+
+            // Cleanup expired pending requests
+            cleanupExpiredPendingRequests();
         }, CLEANUP_INTERVAL, CLEANUP_INTERVAL);
+    }
+
+    // THÊM: Method để cleanup expired pending requests
+    private void cleanupExpiredPendingRequests() {
+        for (me.hsgamer.extrastorage.api.user.User user : userManager.getUsers()) {
+            // Gọi getPendingPartnerRequests() sẽ tự động remove expired requests
+            user.getPendingPartnerRequests();
+        }
+        getLogger().info("Cleaned up expired pending partner requests");
+    }
+
+    // ⚡ Thêm performance monitoring
+    private void startPerformanceMonitoring() {
+        getServer().getScheduler().runTaskTimerAsynchronously(this, () -> {
+            Runtime runtime = Runtime.getRuntime();
+            long usedMemory = (runtime.totalMemory() - runtime.freeMemory()) / 1024 / 1024;
+            long maxMemory = runtime.maxMemory() / 1024 / 1024;
+
+            getLogger().info("=== Performance Monitoring ===");
+            getLogger().info("Memory Usage: " + usedMemory + "MB / " + maxMemory + "MB");
+
+            if (userManager != null) {
+                getLogger().info("User Cache Size: " + userManager.getCacheSize());
+            }
+
+            getLogger().info("Filter Cache Size: " + ItemFilterService.getCacheSize());
+            getLogger().info("Pending Transactions: " + TransactionLogger.getPendingTransactions().size());
+            getLogger().info("==============================");
+
+            // Làm sạch cache cũ để tránh rò rỉ bộ nhớ
+            ItemFilterService.performCacheCleanup();
+        }, MONITORING_INTERVAL, MONITORING_INTERVAL);
+    }
+
+    // ⚡ Thêm method để get cache size
+    public int getCacheSize() {
+        return userManager != null ? userManager.getCacheSize() : 0;
     }
 
     @Override
     public void onDisable() {
+        // Đảm bảo lưu tất cả dữ liệu người dùng TRƯỚC KHI backup
         if (userManager != null) {
-            userManager.cleanup();
+            getLogger().info("Đang lưu dữ liệu người dùng...");
+            userManager.forceSaveAll(); // Sử dụng forceSaveAll để đảm bảo tất cả dữ liệu được lưu
         }
+
+        // Tạo bản sao lưu trước khi tắt plugin
+        if (storageBackupManager != null) {
+            getLogger().info("Đang tạo bản sao lưu dữ liệu trước khi tắt...");
+            storageBackupManager.shutdown();
+        }
+
+        // Dừng và dọn dẹp
+        if (userManager != null) {
+            userManager.stop();
+        }
+
+        // Clear all caches
+        ItemFilterService.clearAllCache();
 
         getLogger().info("=========================");
         getLogger().info("ExtraStorage v" + getDescription().getVersion());

@@ -23,6 +23,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.logging.Level;
@@ -35,7 +36,11 @@ public final class UserManager extends SimpleDataHolder<UUID, UserImpl> {
     private final AtomicBoolean loaded = new AtomicBoolean(false);
     private final AtomicReference<ConcurrentHashMap<UUID, UserImpl>> saveMapRef = new AtomicReference<>(
             new ConcurrentHashMap<>());
+    private final Map<UUID, Long> lastSaveTime = new ConcurrentHashMap<>();
     private final Task autoSaveTask;
+
+    private static final long SAVE_DEBOUNCE_MS = 5000; // 5 giây
+    private static final long AUTO_SAVE_INTERVAL = 20L * 30L; // 30 giây (giảm từ 1 phút)
 
     public UserManager(ExtraStorage instance) {
         this.instance = instance;
@@ -58,26 +63,34 @@ public final class UserManager extends SimpleDataHolder<UUID, UserImpl> {
                 this.storage.onRegister();
                 this.storage.load().forEach((uuid, user) -> getOrCreateEntry(uuid).setValue(user, false));
                 event.setLoaded(true);
+                instance.getLogger().info("Đã tải dữ liệu người chơi thành công");
             } catch (Exception e) {
                 instance.getLogger().log(Level.SEVERE, "Error while loading user", e);
                 event.setLoaded(false);
+                instance.getLogger().warning("Lỗi khi tải dữ liệu người chơi. Plugin có thể không hoạt động đúng!");
             } finally {
                 loaded.set(true);
                 GlobalScheduler.get(instance).run(() -> Bukkit.getServer().getPluginManager().callEvent(event));
             }
         });
 
-        // Auto save task
-        long interval = 20L * 60L; // 1 minute
+        // Auto save task - giảm thời gian xuống 30 giây để đảm bảo dữ liệu được lưu
+        // thường xuyên hơn
         this.autoSaveTask = AsyncScheduler.get(instance).runTimer(
                 () -> {
                     Map<UUID, UserImpl> map = saveMapRef.get();
                     if (!map.isEmpty()) {
-                        save();
+                        try {
+                            instance.getLogger().fine("Đang lưu dữ liệu cho " + map.size() + " người chơi...");
+                            save();
+                            instance.getLogger().fine("Đã lưu dữ liệu thành công");
+                        } catch (Exception e) {
+                            instance.getLogger().log(Level.WARNING, "Lỗi khi tự động lưu dữ liệu", e);
+                        }
                     }
                 },
-                interval,
-                interval);
+                AUTO_SAVE_INTERVAL,
+                AUTO_SAVE_INTERVAL);
     }
 
     public void save() {
@@ -124,6 +137,74 @@ public final class UserManager extends SimpleDataHolder<UUID, UserImpl> {
         }
     }
 
+    public void saveDebounced(UUID uuid) {
+        long currentTime = System.currentTimeMillis();
+        Long lastSave = lastSaveTime.get(uuid);
+
+        if (lastSave == null || currentTime - lastSave > SAVE_DEBOUNCE_MS) {
+            save(uuid);
+            lastSaveTime.put(uuid, currentTime);
+        }
+    }
+
+    // THÊM METHOD UNLOAD
+    public void unload(UUID uuid) {
+        // Đảm bảo lưu dữ liệu trước khi xóa khỏi cache
+        try {
+            UserImpl userData = null;
+            Map<UUID, UserImpl> saveMap = saveMapRef.get();
+            if (saveMap.containsKey(uuid)) {
+                userData = saveMap.get(uuid);
+            } else {
+                DataEntry<UUID, UserImpl> entry = getEntryMap().get(uuid);
+                if (entry != null) {
+                    userData = entry.getValue();
+                }
+            }
+
+            // Lưu dữ liệu
+            if (userData != null) {
+                save(uuid);
+                instance.getLogger().info("Đã lưu dữ liệu của người chơi " + uuid + " trước khi unload");
+            }
+        } catch (Exception e) {
+            instance.getLogger().log(Level.WARNING, "Lỗi khi lưu dữ liệu cho " + uuid, e);
+        }
+
+        // Remove from cache
+        userCache.remove(uuid);
+
+        // Remove from entry map if needed
+        getEntryMap().remove(uuid);
+
+        // Remove từ cả saveMap để đảm bảo không bị mất dữ liệu
+        saveMapRef.get().remove(uuid);
+
+        // Remove khỏi lastSaveTime
+        lastSaveTime.remove(uuid);
+
+        instance.getLogger().info("Unloaded user data for UUID: " + uuid);
+    }
+
+    public void cleanupCache() {
+        // Cleanup user cache - chỉ giữ người chơi online
+        Iterator<UUID> iterator = userCache.keySet().iterator();
+        while (iterator.hasNext()) {
+            UUID uuid = iterator.next();
+            if (Bukkit.getPlayer(uuid) == null) {
+                iterator.remove();
+            }
+        }
+
+        // Cleanup save debounce cache
+        long currentTime = System.currentTimeMillis();
+        lastSaveTime.entrySet().removeIf(entry -> currentTime - entry.getValue() > TimeUnit.MINUTES.toMillis(30));
+    }
+
+    public int getCacheSize() {
+        return userCache.size();
+    }
+
     public boolean isLoaded() {
         return loaded.get();
     }
@@ -145,7 +226,13 @@ public final class UserManager extends SimpleDataHolder<UUID, UserImpl> {
                         key -> ItemImpl.EMPTY.withFiltered(true)));
         // SỬA LỖI NaN%
         long defaultSpace = instance.getSetting().getMaxSpace();
-        entry.setValue(user -> user.withItems(map).withSpace(defaultSpace), false);
+
+        // THÊM: Khởi tạo pending partner requests rỗng
+        entry.setValue(user -> user
+                .withItems(map)
+                .withSpace(defaultSpace)
+                .withPendingPartnerRequests(Collections.emptyMap()),
+                false);
     }
 
     @Override
@@ -191,23 +278,60 @@ public final class UserManager extends SimpleDataHolder<UUID, UserImpl> {
         Map<UUID, UserImpl> saveMap = saveMapRef.get();
         if (!saveMap.isEmpty()) {
             try {
+                instance.getLogger().info("Đang lưu dữ liệu cho " + saveMap.size() + " người chơi...");
+
                 // Save all entries using add/update
                 for (Map.Entry<UUID, UserImpl> entry : saveMap.entrySet()) {
-                    DataEntry<UUID, UserImpl> dataEntry = getOrCreateEntry(entry.getKey());
-                    dataEntry.setValue(entry.getValue());
+                    try {
+                        DataEntry<UUID, UserImpl> dataEntry = getOrCreateEntry(entry.getKey());
+                        dataEntry.setValue(entry.getValue());
+                    } catch (Exception e) {
+                        instance.getLogger().log(Level.WARNING, "Lỗi khi lưu dữ liệu cho người chơi " + entry.getKey(),
+                                e);
+                    }
                 }
                 saveMap.clear();
+
+                instance.getLogger().info("Đã lưu tất cả dữ liệu người chơi thành công");
             } catch (Exception e) {
-                instance.getLogger().warning("Failed to save user data: " + e.getMessage());
+                instance.getLogger().log(Level.SEVERE, "Lỗi nghiêm trọng khi lưu dữ liệu người chơi", e);
             }
         }
 
         // Clear user cache to free memory
         userCache.clear();
+        lastSaveTime.clear();
+    }
+
+    /**
+     * Lưu toàn bộ dữ liệu đồng bộ - sử dụng khi server sắp tắt
+     * để đảm bảo tất cả dữ liệu được lưu
+     */
+    public void forceSaveAll() {
+        try {
+            instance.getLogger().info("Đang lưu toàn bộ dữ liệu người chơi...");
+
+            // Lưu tất cả dữ liệu trong saveMapRef
+            save();
+
+            // Đảm bảo tất cả người chơi online được lưu
+            for (org.bukkit.entity.Player player : Bukkit.getOnlinePlayers()) {
+                UUID uuid = player.getUniqueId();
+                if (getEntryMap().containsKey(uuid)) {
+                    save(uuid);
+                }
+            }
+
+            instance.getLogger().info("Đã lưu toàn bộ dữ liệu người chơi thành công");
+        } catch (Exception e) {
+            instance.getLogger().log(Level.SEVERE, "Lỗi nghiêm trọng khi lưu dữ liệu người chơi", e);
+        }
     }
 
     public void stop() {
         autoSaveTask.cancel();
-        cleanup(); // Make sure to save everything before stopping
+        forceSaveAll(); // Lưu tất cả dữ liệu trước khi dừng
+        cleanup(); // Dọn dẹp các cache
     }
+
 }

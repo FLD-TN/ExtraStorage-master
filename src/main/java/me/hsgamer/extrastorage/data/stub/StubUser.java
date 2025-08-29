@@ -12,11 +12,11 @@ import org.bukkit.entity.Player;
 
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Map;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
 public class StubUser implements User {
-    private final java.util.Map<String, Long> pendingPartnerRequests = new java.util.HashMap<>();
     final DataEntry<UUID, UserImpl> entry;
     private final OfflinePlayer offlinePlayer;
 
@@ -86,46 +86,49 @@ public class StubUser implements User {
     }
 
     /**
-     * Thời gian hết hạn tính bằng ms (5 phút)
+     * Thời gian hết hạn tính bằng ms (30 phút)
      */
-    private static final long REQUEST_EXPIRE_MS = 30 * 60 * 1000; // 30 phút
+    private static final long REQUEST_EXPIRE_MS = 30 * 60 * 1000;
 
     @Override
     public boolean hasPendingPartnerRequest(String username) {
         String key = username.toLowerCase().trim();
-        Long time = pendingPartnerRequests.get(key);
+        Map<String, Long> pendingRequests = entry.getValue().pendingPartnerRequests;
+
+        Long time = pendingRequests.get(key);
         if (time == null)
             return false;
+
         boolean valid = System.currentTimeMillis() - time < REQUEST_EXPIRE_MS;
-        if (!valid)
-            pendingPartnerRequests.remove(key);
-        System.out.println("[DEBUG] hasPendingPartnerRequest for " + key + ": " + valid);
+        if (!valid) {
+            // Remove expired request
+            removePendingPartnerRequest(username);
+        }
         return valid;
     }
 
     @Override
     public void addPendingPartnerRequest(String username) {
         String key = username.toLowerCase().trim();
-        pendingPartnerRequests.put(key, System.currentTimeMillis());
-        System.out.println("[DEBUG] addPendingPartnerRequest: " + key);
+        entry.setValue(user -> user.withPendingPartnerRequest(key, System.currentTimeMillis()));
     }
 
     @Override
     public void removePendingPartnerRequest(String username) {
         String key = username.toLowerCase().trim();
-        pendingPartnerRequests.remove(key);
-        System.out.println("[DEBUG] removePendingPartnerRequest: " + key);
+        entry.setValue(user -> user.withPendingPartnerRequestRemoved(key));
     }
 
     @Override
-    public java.util.Collection<String> getPendingPartnerRequests() {
+    public Collection<String> getPendingPartnerRequests() {
         long now = System.currentTimeMillis();
-        java.util.List<String> list = pendingPartnerRequests.entrySet().stream()
-                .filter(e -> now - e.getValue() < REQUEST_EXPIRE_MS)
-                .map(java.util.Map.Entry::getKey)
-                .collect(java.util.stream.Collectors.toList());
-        System.out.println("[DEBUG] getPendingPartnerRequests: " + list);
-        return list;
+        Map<String, Long> pendingRequests = entry.getValue().pendingPartnerRequests;
+
+        // Remove expired requests first
+        pendingRequests.entrySet().removeIf(entry -> now - entry.getValue() >= REQUEST_EXPIRE_MS);
+
+        return pendingRequests.keySet().stream()
+                .collect(Collectors.toList());
     }
 
     @Override

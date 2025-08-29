@@ -2,12 +2,15 @@ package me.hsgamer.extrastorage.listeners;
 
 import me.hsgamer.extrastorage.ExtraStorage;
 import me.hsgamer.extrastorage.data.user.UserManager;
+import me.hsgamer.extrastorage.util.ItemFilterService;
+
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerLoginEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
+import org.bukkit.event.player.PlayerRespawnEvent;
 
 import java.util.UUID;
 
@@ -31,55 +34,54 @@ public final class PlayerListener
     public void onJoin(PlayerJoinEvent event) {
         Player player = event.getPlayer();
         UUID uuid = player.getUniqueId();
-        
-        // Sử dụng runTask để đảm bảo manager.load() được thực hiện sau khi player đã hoàn toàn tham gia server
-        instance.getServer().getScheduler().runTask(instance, () -> {
-            try {
-                // Đảm bảo player vẫn online trước khi load data
-                if (!player.isOnline()) return;
-                
-                // Load data và đảm bảo nó được hoàn thành
-                manager.load(uuid);
-                
-                // Debug log
-                instance.getLogger().info("Loaded storage data for player: " + player.getName());
-            } catch (Exception e) {
-                instance.getLogger().warning("Failed to load storage data for " + player.getName() + ": " + e.getMessage());
-                e.printStackTrace();
-            }
-        });
-        
-        // Thông báo về yêu cầu kết bạn đang chờ - đảm bảo chạy sau khi dữ liệu đã được tải
+
+        // CHỈ load user, không cần unload vì requests đã được lưu trong database
+        manager.load(uuid);
+
+        // Đảm bảo storage được kích hoạt
+        me.hsgamer.extrastorage.api.user.User user = manager.getUser(player);
+        if (user != null) {
+            user.getStorage().setStatus(true);
+            user.save(); // Lưu trạng thái
+        }
+
+        // Thông báo về yêu cầu kết bạn đang chờ
         instance.getServer().getScheduler().runTaskLater(instance, () -> {
-            if (!player.isOnline()) return;
-            
-            try {
-                int pendingRequests = manager.getUser(player).getPendingPartnerRequests().size();
-                if (pendingRequests > 0) {
-                    player.sendMessage(me.hsgamer.extrastorage.configs.Message.getMessage("INFO.partner-request-received")
+            if (!player.isOnline())
+                return;
+
+            int pendingRequests = manager.getUser(player).getPendingPartnerRequests().size();
+            if (pendingRequests > 0) {
+                player.sendMessage(me.hsgamer.extrastorage.configs.Message.getMessage("INFO.partner-request-received")
                         .replaceAll(me.hsgamer.extrastorage.util.Utils.getRegex("player"), "nhiều người"));
-                }
-            } catch (Exception e) {
-                instance.getLogger().warning("Failed to check partner requests for " + player.getName() + ": " + e.getMessage());
             }
-        }, 60L); // Tăng delay lên 3 giây để đảm bảo data đã được tải xong
+        }, 40L); // Delay 2 giây sau khi đăng nhập
     }
 
     @EventHandler
     public void onQuit(PlayerQuitEvent event) {
         Player player = event.getPlayer();
         UUID uuid = player.getUniqueId();
-        
-        try {
-            // Lưu dữ liệu ngay lập tức khi player thoát
-            manager.save(uuid);
-            
-            // Debug log
-            instance.getLogger().info("Saved storage data for player: " + player.getName());
-        } catch (Exception e) {
-            instance.getLogger().severe("Failed to save storage data for " + player.getName() + ": " + e.getMessage());
-            e.printStackTrace();
-        }
+        manager.save(uuid);
+        // KHÔNG unload ở đây để tránh race condition
     }
 
+    @EventHandler
+    public void onPlayerRespawn(PlayerRespawnEvent event) {
+        // Tự động recover storage state khi player respawn
+        Player player = event.getPlayer();
+        instance.getServer().getScheduler().runTaskLater(instance, () -> {
+            me.hsgamer.extrastorage.api.user.User user = manager.getUser(player);
+            if (user != null) {
+                user.getStorage().setStatus(true);
+                user.save();
+            }
+        }, 20L); // Delay 1 giây
+    }
+
+    @EventHandler
+    public void onPlayerQuit(PlayerQuitEvent e) {
+        ItemFilterService.clearCache(e.getPlayer().getUniqueId());
+        manager.unload(e.getPlayer().getUniqueId()); // Sửa userManager thành manager
+    }
 }

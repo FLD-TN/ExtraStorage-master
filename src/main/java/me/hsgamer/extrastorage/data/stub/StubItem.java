@@ -1,6 +1,7 @@
 package me.hsgamer.extrastorage.data.stub;
 
 import me.hsgamer.extrastorage.api.item.Item;
+import me.hsgamer.extrastorage.data.user.ItemImpl;
 import me.hsgamer.extrastorage.util.ItemUtil;
 import org.bukkit.inventory.ItemStack;
 
@@ -35,7 +36,8 @@ public class StubItem implements Item {
 
     @Override
     public boolean isFiltered() {
-        return storage.user.entry.getValue().items.get(key).filtered;
+        ItemImpl item = storage.user.entry.getValue().items.get(key);
+        return item != null && item.filtered;
     }
 
     @Override
@@ -50,12 +52,14 @@ public class StubItem implements Item {
 
     @Override
     public void add(long quantity) {
-        storage.user.entry.setValue(u -> u.withItemModifiedIfFound(key, item -> item.withQuantity(item.quantity + quantity)));
+        storage.user.entry
+                .setValue(u -> u.withItemModifiedIfFound(key, item -> item.withQuantity(item.quantity + quantity)));
     }
 
     @Override
     public void subtract(long quantity) {
-        storage.user.entry.setValue(u -> u.withItemModifiedIfFound(key, item -> item.withQuantity(item.quantity - quantity)));
+        storage.user.entry
+                .setValue(u -> u.withItemModifiedIfFound(key, item -> item.withQuantity(item.quantity - quantity)));
     }
 
     @Override

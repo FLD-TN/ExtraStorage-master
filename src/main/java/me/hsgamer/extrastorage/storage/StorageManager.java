@@ -9,8 +9,10 @@ import org.bukkit.inventory.meta.ItemMeta;
 
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
+import java.util.concurrent.locks.StampedLock;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
 
@@ -41,11 +43,12 @@ public class StorageManager {
     private final AtomicLong totalUsedSpace = new AtomicLong(0);
 
     // Thời gian cache ngắn hơn để tránh inconsistency
-    private static final long CACHE_DURATION = 5000; // 5 giây
+    private static final long CACHE_DURATION = 30000; // 30 giây
     private volatile long lastCacheRefresh = 0;
 
     // Lock để đồng bộ hóa các thao tác quan trọng
     private final ReentrantReadWriteLock lock = new ReentrantReadWriteLock();
+    private final AtomicBoolean isRefreshing = new AtomicBoolean(false);
 
     public StorageManager(Storage storage) {
         this.storage = storage;
@@ -249,8 +252,14 @@ public class StorageManager {
      */
     private void checkAndRefreshCache() {
         long currentTime = System.currentTimeMillis();
-        if (currentTime - lastCacheRefresh > CACHE_DURATION) {
-            refreshCache();
+        if (currentTime - lastCacheRefresh > CACHE_DURATION &&
+                isRefreshing.compareAndSet(false, true)) {
+            try {
+                refreshCache();
+                lastCacheRefresh = currentTime;
+            } finally {
+                isRefreshing.set(false);
+            }
         }
     }
 

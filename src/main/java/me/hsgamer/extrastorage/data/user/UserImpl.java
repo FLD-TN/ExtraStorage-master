@@ -15,23 +15,34 @@ import java.util.Map;
 import java.util.UUID;
 import java.util.function.UnaryOperator;
 import java.util.function.Function;
+import java.util.concurrent.ConcurrentHashMap;
 
 public class UserImpl {
-    public static final UserImpl EMPTY = new UserImpl(Collections.emptyMap(), "", Collections.emptyMap(), 0, true);
+    public static final UserImpl EMPTY = new UserImpl(
+            Collections.emptyMap(),
+            "",
+            Collections.emptyMap(),
+            0,
+            true,
+            Collections.emptyMap() // THÊM: pending partner requests
+    );
 
     public final Map<UUID, Long> partners;
     public final String texture;
     public final Map<String, ItemImpl> items;
     public final long space;
     public final boolean status;
+    public final Map<String, Long> pendingPartnerRequests; // THÊM: pending requests
 
     private UserImpl(Map<UUID, Long> partners, String texture, Map<String, ItemImpl> items, long space,
-            boolean status) {
+            boolean status, Map<String, Long> pendingPartnerRequests) { // THÊM parameter
         this.partners = partners;
         this.texture = texture;
         this.items = items;
         this.space = space;
         this.status = status;
+        this.pendingPartnerRequests = pendingPartnerRequests != null ? new ConcurrentHashMap<>(pendingPartnerRequests)
+                : new ConcurrentHashMap<>();
     }
 
     public static SqlValueConverter<UserImpl> getConverter(boolean isMySql) {
@@ -102,49 +113,154 @@ public class UserImpl {
                             });
                             return user.withAdditionalItems(items);
                         })
+                // THÊM: Converter cho pending partner requests
+                .entry(
+                        new StringSqlValueConverter("pending_requests", isMySql ? "LONGTEXT" : "TEXT"),
+                        user -> {
+                            JsonObject jsonObject = new JsonObject();
+                            for (Map.Entry<String, Long> entry : user.pendingPartnerRequests.entrySet()) {
+                                jsonObject.addProperty(entry.getKey(), entry.getValue());
+                            }
+                            return jsonObject.toString();
+                        },
+                        (user, string) -> {
+                            JsonObject jsonObject = string != null && !string.isEmpty()
+                                    ? new JsonParser().parse(string).getAsJsonObject()
+                                    : new JsonObject();
+                            Map<String, Long> pendingRequests = new HashMap<>();
+                            jsonObject.entrySet().forEach(entry -> {
+                                String username = entry.getKey();
+                                long timestamp = entry.getValue().getAsLong();
+                                pendingRequests.put(username, timestamp);
+                            });
+                            return user.withPendingPartnerRequests(pendingRequests);
+                        })
                 .build();
     }
 
+    // THÊM: Method for pending partner requests
+    public UserImpl withPendingPartnerRequests(Map<String, Long> pendingPartnerRequests) {
+        return new UserImpl(
+                this.partners,
+                this.texture,
+                this.items,
+                this.space,
+                this.status,
+                pendingPartnerRequests);
+    }
+
+    public UserImpl withPendingPartnerRequest(String username, long timestamp) {
+        Map<String, Long> newPending = new ConcurrentHashMap<>(this.pendingPartnerRequests);
+        newPending.put(username, timestamp);
+        return new UserImpl(
+                this.partners,
+                this.texture,
+                this.items,
+                this.space,
+                this.status,
+                newPending);
+    }
+
+    public UserImpl withPendingPartnerRequestRemoved(String username) {
+        Map<String, Long> newPending = new ConcurrentHashMap<>(this.pendingPartnerRequests);
+        newPending.remove(username);
+        return new UserImpl(
+                this.partners,
+                this.texture,
+                this.items,
+                this.space,
+                this.status,
+                newPending);
+    }
+
     public UserImpl withPartners(Map<UUID, Long> partners) {
-        return new UserImpl(Collections.unmodifiableMap(partners), this.texture, this.items, this.space, this.status);
+        return new UserImpl(
+                Collections.unmodifiableMap(partners),
+                this.texture,
+                this.items,
+                this.space,
+                this.status,
+                this.pendingPartnerRequests);
     }
 
     public UserImpl withPartner(UUID uuid) {
         HashMap<UUID, Long> partners = new HashMap<>(this.partners);
         partners.put(uuid, System.currentTimeMillis());
-        return new UserImpl(Collections.unmodifiableMap(partners), this.texture, this.items, this.space, this.status);
+        return new UserImpl(
+                Collections.unmodifiableMap(partners),
+                this.texture,
+                this.items,
+                this.space,
+                this.status,
+                this.pendingPartnerRequests);
     }
 
     public UserImpl withPartnerRemoved(UUID uuid) {
         HashMap<UUID, Long> partners = new HashMap<>(this.partners);
         partners.remove(uuid);
-        return new UserImpl(Collections.unmodifiableMap(partners), this.texture, this.items, this.space, this.status);
+        return new UserImpl(
+                Collections.unmodifiableMap(partners),
+                this.texture,
+                this.items,
+                this.space,
+                this.status,
+                this.pendingPartnerRequests);
     }
 
     public UserImpl withTexture(String texture) {
-        return new UserImpl(this.partners, texture, this.items, this.space, this.status);
+        return new UserImpl(
+                this.partners,
+                texture,
+                this.items,
+                this.space,
+                this.status,
+                this.pendingPartnerRequests);
     }
 
     public UserImpl withItems(Map<String, ItemImpl> items) {
-        return new UserImpl(this.partners, this.texture, Collections.unmodifiableMap(items), this.space, this.status);
+        return new UserImpl(
+                this.partners,
+                this.texture,
+                Collections.unmodifiableMap(items),
+                this.space,
+                this.status,
+                this.pendingPartnerRequests);
     }
 
     public UserImpl withAdditionalItems(Map<String, ItemImpl> additionalItems) {
         HashMap<String, ItemImpl> items = new HashMap<>(this.items);
         additionalItems.forEach(items::putIfAbsent);
-        return new UserImpl(this.partners, this.texture, Collections.unmodifiableMap(items), this.space, this.status);
+        return new UserImpl(
+                this.partners,
+                this.texture,
+                Collections.unmodifiableMap(items),
+                this.space,
+                this.status,
+                this.pendingPartnerRequests);
     }
 
     public UserImpl withItemIfNotFound(String key, ItemImpl item) {
         HashMap<String, ItemImpl> items = new HashMap<>(this.items);
         items.putIfAbsent(key, item);
-        return new UserImpl(this.partners, this.texture, Collections.unmodifiableMap(items), this.space, this.status);
+        return new UserImpl(
+                this.partners,
+                this.texture,
+                Collections.unmodifiableMap(items),
+                this.space,
+                this.status,
+                this.pendingPartnerRequests);
     }
 
     public UserImpl withItemRemoved(String key) {
         HashMap<String, ItemImpl> items = new HashMap<>(this.items);
         items.remove(key);
-        return new UserImpl(this.partners, this.texture, Collections.unmodifiableMap(items), this.space, this.status);
+        return new UserImpl(
+                this.partners,
+                this.texture,
+                Collections.unmodifiableMap(items),
+                this.space,
+                this.status,
+                this.pendingPartnerRequests);
     }
 
     public UserImpl withItemModifiedIfFound(String key, Function<ItemImpl, ItemImpl> function) {
@@ -170,10 +286,22 @@ public class UserImpl {
     }
 
     public UserImpl withSpace(long space) {
-        return new UserImpl(this.partners, this.texture, this.items, space, this.status);
+        return new UserImpl(
+                this.partners,
+                this.texture,
+                this.items,
+                space,
+                this.status,
+                this.pendingPartnerRequests);
     }
 
     public UserImpl withStatus(boolean status) {
-        return new UserImpl(this.partners, this.texture, this.items, this.space, status);
+        return new UserImpl(
+                this.partners,
+                this.texture,
+                this.items,
+                this.space,
+                status,
+                this.pendingPartnerRequests);
     }
 }

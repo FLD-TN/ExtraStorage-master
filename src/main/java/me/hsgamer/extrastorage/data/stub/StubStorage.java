@@ -16,6 +16,7 @@ import org.bukkit.entity.Player;
 import org.bukkit.permissions.PermissionAttachmentInfo;
 
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 
 public class StubStorage implements Storage {
@@ -37,6 +38,8 @@ public class StubStorage implements Storage {
     }
 
     // Cache cho giá trị space để không phải tính toán lại liên tục
+    private long totalUsedSpace = 0; // Duy trì biến này
+    private final Map<String, String> normalizedKeyCache = new ConcurrentHashMap<>();
     private volatile long cachedSpace = -2; // -2 là giá trị không hợp lệ, cho biết cache chưa được tính
     private volatile long lastCacheTime = 0;
     private static final long CACHE_DURATION = 15000; // Giảm thời gian cache xuống 15 giây để cập nhật nhanh hơn
@@ -544,6 +547,8 @@ public class StubStorage implements Storage {
                 // Ignore if PlaceholderAPI is not loaded
             }
         });
+        totalUsedSpace += quantity; // Update biến
+        resetUsedSpaceCache();
     }
 
     @Override
