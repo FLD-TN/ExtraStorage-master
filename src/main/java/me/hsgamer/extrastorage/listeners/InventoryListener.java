@@ -11,6 +11,7 @@ import org.bukkit.event.EventPriority;
 import org.bukkit.event.inventory.InventoryClickEvent;
 import org.bukkit.event.inventory.InventoryDragEvent;
 import org.bukkit.event.inventory.InventoryMoveItemEvent;
+import org.bukkit.event.inventory.InventoryPickupItemEvent;
 import org.bukkit.inventory.InventoryHolder;
 import org.bukkit.inventory.ItemStack;
 
@@ -85,8 +86,14 @@ public final class InventoryListener
             }
         }
 
-        // Đối với các trường hợp khác, ngăn chặn tất cả các tương tác với GUI
+        // Đối với các trường hợp khác:
+        // 1. Ngăn chặn tất cả các tương tác trực tiếp với GUI
         if (event.getClickedInventory().getHolder() instanceof GuiCreator) {
+            event.setCancelled(true);
+        }
+
+        // 2. Ngăn chặn cả shift-click từ inventory người chơi vào GUI
+        if (event.isShiftClick() && !(holder instanceof me.hsgamer.extrastorage.gui.AddItemToStorageGui)) {
             event.setCancelled(true);
         }
 
@@ -114,40 +121,53 @@ public final class InventoryListener
         if (!(holder instanceof GuiCreator))
             return;
 
-        // Nếu là GUI AddItemToStorageGui, cho phép kéo vào slot 13
+        // Kiểm tra xem có bất kỳ slot nào trong GUI đang được kéo thả
+        boolean affectsTopInventory = false;
+        int topInventorySize = event.getView().getTopInventory().getSize();
+
+        for (int slot : event.getRawSlots()) {
+            // Nếu slot nhỏ hơn kích thước của top inventory, thì đó là slot trong GUI
+            if (slot < topInventorySize) {
+                affectsTopInventory = true;
+                break;
+            }
+        }
+
+        // Nếu không ảnh hưởng đến GUI, cho phép kéo thả
+        if (!affectsTopInventory) {
+            return;
+        }
+
+        // Nếu là GUI AddItemToStorageGui, kiểm tra kỹ lưỡng
         if (holder instanceof me.hsgamer.extrastorage.gui.AddItemToStorageGui) {
             // Kiểm tra xem có slot nào thuộc về GUI (không phải inventory người chơi)
-            boolean hasTopInventorySlot = false;
+            boolean hasOtherTopSlots = false;
             for (int slot : event.getRawSlots()) {
-                if (slot < event.getView().getTopInventory().getSize()) {
+                if (slot < topInventorySize) {
                     // Nếu slot không phải là slot 13, hủy bỏ
                     if (slot != 13) {
-                        hasTopInventorySlot = true;
+                        hasOtherTopSlots = true;
                         break;
                     }
                 }
             }
 
-            // Nếu chỉ kéo vào slot 13 hoặc kéo vào inventory người chơi, cho phép
-            if (!hasTopInventorySlot || event.getRawSlots().contains(13)) {
-                // Kiểm tra item có hợp lệ không nếu kéo vào slot 13
-                if (event.getRawSlots().contains(13)) {
-                    Player player = (Player) event.getWhoClicked();
-                    ItemStack cursorItem = event.getOldCursor();
+            // Nếu chỉ kéo vào slot 13, cho phép sau khi kiểm tra
+            if (!hasOtherTopSlots && event.getRawSlots().contains(13)) {
+                Player player = (Player) event.getWhoClicked();
+                ItemStack cursorItem = event.getOldCursor();
 
-                    me.hsgamer.extrastorage.gui.AddItemToStorageGui gui = (me.hsgamer.extrastorage.gui.AddItemToStorageGui) holder;
+                me.hsgamer.extrastorage.gui.AddItemToStorageGui gui = (me.hsgamer.extrastorage.gui.AddItemToStorageGui) holder;
 
-                    // Kiểm tra xem item có được phép lưu trữ không
-                    if (!gui.isItemStackAllowed(cursorItem)) {
-                        event.setCancelled(true);
-                        player.sendMessage("§c[ExtraStorage] §fVật phẩm này không được phép lưu trữ trong kho!");
-                        return;
-                    }
-
+                // Kiểm tra xem item có được phép lưu trữ không
+                if (gui.isItemStackAllowed(cursorItem)) {
                     // Cho phép kéo vào slot 13
                     return;
+                } else {
+                    event.setCancelled(true);
+                    player.sendMessage("§c[ExtraStorage] §fVật phẩm này không được phép lưu trữ trong kho!");
+                    return;
                 }
-                return;
             }
         }
 
@@ -157,9 +177,18 @@ public final class InventoryListener
 
     @EventHandler(priority = EventPriority.HIGH)
     public void onMoveItem(InventoryMoveItemEvent event) {
+        // Chặn mọi di chuyển item vào hoặc ra khỏi bất kỳ GUI nào
         if (event.getSource().getHolder() instanceof GuiCreator ||
                 event.getDestination().getHolder() instanceof GuiCreator) {
             // Hủy toàn bộ hành động di chuyển item vào/ra GUI
+            event.setCancelled(true);
+        }
+    }
+
+    @EventHandler(priority = EventPriority.HIGH)
+    public void onPickupItem(InventoryPickupItemEvent event) {
+        // Chặn các hopper, v.v. nhặt item từ GUI
+        if (event.getInventory().getHolder() instanceof GuiCreator) {
             event.setCancelled(true);
         }
     }

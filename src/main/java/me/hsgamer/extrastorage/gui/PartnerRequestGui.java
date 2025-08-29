@@ -29,11 +29,33 @@ public class PartnerRequestGui extends ESGui {
                             // Lấy UUID từ username
                             org.bukkit.OfflinePlayer offline = org.bukkit.Bukkit.getOfflinePlayer(name);
                             if (offline != null && offline.getUniqueId() != null) {
+                                // Thêm người gửi vào danh sách đối tác của người nhận
                                 user.addPartner(offline.getUniqueId());
                                 user.removePendingPartnerRequest(name);
-                                player.sendMessage("§aĐã chấp nhận yêu cầu kết bạn từ " + name);
+                                player.sendMessage(me.hsgamer.extrastorage.configs.Message
+                                        .getMessage("SUCCESS.accepted-partner-request")
+                                        .replaceAll(me.hsgamer.extrastorage.util.Utils.getRegex("player"), name));
+
+                                // Thêm người nhận vào danh sách đối tác của người gửi
+                                me.hsgamer.extrastorage.api.user.User senderUser = instance.getUserManager()
+                                        .getUser(offline);
+                                if (senderUser != null) {
+                                    senderUser.addPartner(player.getUniqueId());
+                                    // Đảm bảo lưu thay đổi
+                                    senderUser.save();
+                                }
+
+                                // Thông báo cho người gửi nếu họ trực tuyến
+                                if (offline.isOnline()) {
+                                    offline.getPlayer().sendMessage(me.hsgamer.extrastorage.configs.Message
+                                            .getMessage("SUCCESS.being-partner")
+                                            .replaceAll(me.hsgamer.extrastorage.util.Utils.getRegex("player"),
+                                                    player.getName())
+                                            .replaceAll(me.hsgamer.extrastorage.util.Utils.getRegex("label"), "kho"));
+                                }
                             } else {
-                                player.sendMessage("§cKhông tìm thấy player " + name);
+                                player.sendMessage(
+                                        me.hsgamer.extrastorage.configs.Message.getMessage("FAIL.player-not-found"));
                             }
                             this.reopenGui(1);
                         } else if (event.isRightClick()) {

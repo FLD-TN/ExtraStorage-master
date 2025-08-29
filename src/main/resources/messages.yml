@@ -20,7 +20,7 @@ HELP:
     open: '§8 > §c/{label} [partner] §f: §7Mở kho chứa của bạn/đối tác.'
     toggle: '§8 > §c/{label} toggle §f: §7Thay đổi trạng thái sử dụng kho chứa.'
     filter: '§8 > §c/{label} filter §f: §7Mở bộ lọc của bạn.'
-    partner: '§8 > §c/{label} partner [add|remove|clear] [player] §f: §7Quản lý danh
+    partner: '§8 > §c/{label} partner [add|remove|clear|accept|deny] [player] §f: §7Quản lý danh
       sách đối tác của bạn.'
     sell: '§8 > §c/{label} sell [<material-key> [amount]] §f: §7Bán vật phẩm trong
       kho.'
@@ -95,6 +95,8 @@ SUCCESS:
     từ chối.'
   request-denied: '{prefix}§cBạn đã từ chối yêu cầu kết bạn từ §b{player}§c.'
   partner-request-denied: '{prefix}§cYêu cầu kết bạn của bạn đã bị từ chối bởi §b{player}§c.'
+  accepted-partner-request: '{prefix}§aBạn đã chấp nhận yêu cầu kết bạn từ §b{player}§a.'
+  denied-partner-request: '{prefix}§cBạn đã từ chối yêu cầu kết bạn từ §b{player}§c.'
 WARN:
   confirm-cleanup: '{prefix}§6Nhấp lại để xác nhận dọn dẹp!'
   confirm-filter: '{prefix}§6Nhấp lại để xác nhận thêm vào bộ lọc!'
@@ -106,6 +108,7 @@ WARN:
   StorageIsFull: §c§lKho chứa của bạn đã đầy!
   StorageAlmostFull: §e§lKho chứa của bạn gần đầy! ({percent}%)
 FAIL:
+  no-partner-request: '{prefix}§c§lKhông có yêu cầu kết bạn nào từ §e{player}§c§l!'
   player-not-partner: '{prefix}§c§lBạn không phải là đối tác của §e{player}§c§l!'
   player-not-found: '{prefix}§c§lKhông tìm thấy người chơi §e{player}§c§l!'
   not-yourself: '{prefix}§c§lKhông thể mở kho của chính mình bằng lệnh này!'

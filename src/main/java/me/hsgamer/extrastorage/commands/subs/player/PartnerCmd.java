@@ -90,11 +90,21 @@ public final class PartnerCmd
                     return;
                 }
 
-                user.addPartner(target.getUniqueId());
-                context.sendMessage(Message.getMessage("SUCCESS.made-partner").replaceAll(Utils.getRegex("player"),
+                // Kiểm tra xem đã gửi lời mời cho người này chưa
+                boolean hasPendingRequest = partner.hasPendingPartnerRequest(player.getName());
+                System.out.println("[DEBUG] Checking if " + player.getName() + " already sent request to "
+                        + target.getName() + ": " + hasPendingRequest);
+                if (hasPendingRequest) {
+                    context.sendMessage(Message.getMessage("FAIL.request-already-sent"));
+                    return;
+                }
+
+                // Gửi yêu cầu kết bạn
+                partner.addPendingPartnerRequest(player.getName());
+                context.sendMessage(Message.getMessage("SUCCESS.request-sent").replaceAll(Utils.getRegex("player"),
                         target.getName()));
                 if (target.isOnline())
-                    target.getPlayer().sendMessage(Message.getMessage("SUCCESS.being-partner")
+                    target.getPlayer().sendMessage(Message.getMessage("INFO.partner-request-received")
                             .replaceAll(Utils.getRegex("player"), player.getName())
                             .replaceAll(Utils.getRegex("label"), context.getLabel()));
                 break;
@@ -119,7 +129,13 @@ public final class PartnerCmd
                     return;
                 }
 
+                // Xóa B từ danh sách đối tác của A
                 user.removePartner(target.getUniqueId());
+
+                // Đồng thời xóa A từ danh sách đối tác của B
+                partner.removePartner(player.getUniqueId());
+                partner.save(); // Đảm bảo lưu thay đổi
+
                 context.sendMessage(Message.getMessage("SUCCESS.removed-partner").replaceAll(Utils.getRegex("player"),
                         target.getName()));
                 if (target.isOnline()) {
@@ -135,6 +151,64 @@ public final class PartnerCmd
                 }
 
                 break;
+            case "accept":
+                if (context.getArgsLength() == 1) {
+                    context.sendMessage(Message.getMessage("FAIL.must-enter-player"));
+                    return;
+                }
+
+                String senderName = context.getArgs(1);
+                if (!user.hasPendingPartnerRequest(senderName)) {
+                    context.sendMessage(Message.getMessage("FAIL.no-partner-request")
+                            .replaceAll(Utils.getRegex("player"), senderName));
+                    return;
+                }
+
+                OfflinePlayer requester = Bukkit.getOfflinePlayer(senderName);
+                if (requester != null && requester.getUniqueId() != null) {
+                    // Thêm người gửi vào danh sách đối tác của người nhận
+                    user.addPartner(requester.getUniqueId());
+                    user.removePendingPartnerRequest(senderName);
+                    context.sendMessage(Message.getMessage("SUCCESS.accepted-partner-request")
+                            .replaceAll(Utils.getRegex("player"), senderName));
+
+                    // Thêm người nhận vào danh sách đối tác của người gửi
+                    User requesterUser = manager.getUser(requester);
+                    if (requesterUser != null) {
+                        requesterUser.addPartner(player.getUniqueId());
+                        // Đảm bảo lưu thay đổi
+                        requesterUser.save();
+                    }
+
+                    if (requester.isOnline()) {
+                        requester.getPlayer().sendMessage(Message.getMessage("SUCCESS.being-partner")
+                                .replaceAll(Utils.getRegex("player"), player.getName())
+                                .replaceAll(Utils.getRegex("label"), context.getLabel()));
+                    }
+                } else {
+                    context.sendMessage(Message.getMessage("FAIL.player-not-found"));
+                    user.removePendingPartnerRequest(senderName);
+                }
+                break;
+
+            case "deny":
+                if (context.getArgsLength() == 1) {
+                    context.sendMessage(Message.getMessage("FAIL.must-enter-player"));
+                    return;
+                }
+
+                String requesterName = context.getArgs(1);
+                if (!user.hasPendingPartnerRequest(requesterName)) {
+                    context.sendMessage(Message.getMessage("FAIL.no-partner-request")
+                            .replaceAll(Utils.getRegex("player"), requesterName));
+                    return;
+                }
+
+                user.removePendingPartnerRequest(requesterName);
+                context.sendMessage(Message.getMessage("SUCCESS.denied-partner-request")
+                        .replaceAll(Utils.getRegex("player"), requesterName));
+                break;
+
             case "clear":
                 Collection<Partner> partners = user.getPartners();
                 if (partners.size() < 1) {
@@ -143,17 +217,26 @@ public final class PartnerCmd
                 }
                 for (Partner pn : partners) {
                     OfflinePlayer offPlayer = pn.getOfflinePlayer();
-                    if (!offPlayer.isOnline())
-                        continue;
 
-                    Player p = offPlayer.getPlayer();
-                    p.sendMessage(Message.getMessage("SUCCESS.no-longer-partner").replaceAll(Utils.getRegex("player"),
-                            player.getName()));
-                    InventoryHolder holder = p.getOpenInventory().getTopInventory().getHolder();
-                    if (holder instanceof StorageGui) {
-                        StorageGui gui = (StorageGui) holder;
-                        if (gui.getPartner().getUUID().equals(player.getUniqueId()))
-                            p.closeInventory();
+                    // Cập nhật danh sách đối tác của người chơi khác
+                    User otherUser = manager.getUser(offPlayer);
+                    if (otherUser != null) {
+                        otherUser.removePartner(player.getUniqueId());
+                        otherUser.save(); // Đảm bảo lưu thay đổi
+                    }
+
+                    // Thông báo và đóng GUI nếu đang online
+                    if (offPlayer.isOnline()) {
+                        Player p = offPlayer.getPlayer();
+                        p.sendMessage(
+                                Message.getMessage("SUCCESS.no-longer-partner").replaceAll(Utils.getRegex("player"),
+                                        player.getName()));
+                        InventoryHolder holder = p.getOpenInventory().getTopInventory().getHolder();
+                        if (holder instanceof StorageGui) {
+                            StorageGui gui = (StorageGui) holder;
+                            if (gui.getPartner().getUUID().equals(player.getUniqueId()))
+                                p.closeInventory();
+                        }
                     }
                 }
                 user.clearPartners();

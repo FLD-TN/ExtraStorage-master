@@ -23,6 +23,11 @@ public class ConfirmRemovePartnerGui extends ESGui {
                 .handleClick(event -> {
                     user.removePartner(partner.getUniqueId());
                     partnerUser.removePartner(player.getUniqueId());
+
+                    // Đảm bảo lưu thay đổi
+                    user.save();
+                    partnerUser.save();
+
                     player.sendMessage("§aĐã xoá partner " + partner.getName());
                     new PartnerGui(player, 1).open();
                 });

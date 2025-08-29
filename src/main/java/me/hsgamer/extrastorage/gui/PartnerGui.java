@@ -1,9 +1,11 @@
 package me.hsgamer.extrastorage.gui;
 
+import me.hsgamer.extrastorage.ExtraStorage;
 import me.hsgamer.extrastorage.api.user.Partner;
 import me.hsgamer.extrastorage.api.user.User;
 import me.hsgamer.extrastorage.configs.Message;
 import me.hsgamer.extrastorage.data.Constants;
+import me.hsgamer.extrastorage.data.user.UserManager;
 import me.hsgamer.extrastorage.gui.base.ESGui;
 import me.hsgamer.extrastorage.gui.icon.Icon;
 import me.hsgamer.extrastorage.util.Utils;
@@ -229,24 +231,43 @@ public final class PartnerGui
                         return;
                     }
 
-                    for (Partner pn : partners) {
+                    UserManager manager = ExtraStorage.getInstance().getUserManager();
+                    List<Partner> partnersCopy = new ArrayList<>(partners); // Tạo bản sao để tránh
+                                                                            // ConcurrentModificationException
+
+                    for (Partner pn : partnersCopy) {
                         OfflinePlayer offPlayer = pn.getOfflinePlayer();
-                        if (!offPlayer.isOnline())
-                            continue;
 
-                        Player p = offPlayer.getPlayer();
-                        p.sendMessage(Message.getMessage("SUCCESS.no-longer-partner")
-                                .replaceAll(Utils.getRegex("player"), player.getName()));
-                        InventoryHolder holder = p.getOpenInventory().getTopInventory().getHolder();
-                        if (holder instanceof StorageGui) {
-                            StorageGui gui = (StorageGui) holder;
-                            if (gui.getPartner().getUUID().equals(player.getUniqueId()))
-                                p.closeInventory();
+                        // Cập nhật danh sách đối tác của người chơi khác
+                        User otherUser = manager.getUser(offPlayer);
+                        if (otherUser != null) {
+                            // Xoá hoàn toàn partner khỏi danh sách của người chơi khác
+                            otherUser.removePartner(player.getUniqueId());
+                            otherUser.save(); // Đảm bảo lưu thay đổi
                         }
-                    }
-                    user.clearPartners();
-                    player.sendMessage(Message.getMessage("SUCCESS.cleanup-partners-list"));
 
+                        // Thông báo và xử lý người chơi đang online
+                        if (offPlayer.isOnline()) {
+                            Player p = offPlayer.getPlayer();
+                            p.sendMessage(Message.getMessage("SUCCESS.no-longer-partner")
+                                    .replaceAll(Utils.getRegex("player"), player.getName()));
+                            InventoryHolder holder = p.getOpenInventory().getTopInventory().getHolder();
+                            if (holder instanceof StorageGui) {
+                                StorageGui gui = (StorageGui) holder;
+                                if (gui.getPartner().getUUID().equals(player.getUniqueId()))
+                                    p.closeInventory();
+                            }
+                        }
+
+                        // Xoá partner khỏi danh sách hiện tại của người chơi A
+                        user.removePartner(offPlayer.getUniqueId());
+                    }
+
+                    // user.clearPartners(); // Dòng này không cần thiết nữa vì đã xoá từng partner
+                    // trong vòng lặp
+                    user.save(); // Đảm bảo lưu thay đổi
+
+                    player.sendMessage(Message.getMessage("SUCCESS.cleanup-partners-list"));
                     this.reopenGui(1);
                 }).setSlots(slots);
         this.addIcon(icon);
