@@ -113,28 +113,6 @@ public class UserImpl {
                             });
                             return user.withAdditionalItems(items);
                         })
-                // THÊM: Converter cho pending partner requests
-                .entry(
-                        new StringSqlValueConverter("pending_requests", isMySql ? "LONGTEXT" : "TEXT"),
-                        user -> {
-                            JsonObject jsonObject = new JsonObject();
-                            for (Map.Entry<String, Long> entry : user.pendingPartnerRequests.entrySet()) {
-                                jsonObject.addProperty(entry.getKey(), entry.getValue());
-                            }
-                            return jsonObject.toString();
-                        },
-                        (user, string) -> {
-                            JsonObject jsonObject = string != null && !string.isEmpty()
-                                    ? new JsonParser().parse(string).getAsJsonObject()
-                                    : new JsonObject();
-                            Map<String, Long> pendingRequests = new HashMap<>();
-                            jsonObject.entrySet().forEach(entry -> {
-                                String username = entry.getKey();
-                                long timestamp = entry.getValue().getAsLong();
-                                pendingRequests.put(username, timestamp);
-                            });
-                            return user.withPendingPartnerRequests(pendingRequests);
-                        })
                 .build();
     }
 

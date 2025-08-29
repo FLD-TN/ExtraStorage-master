@@ -122,6 +122,10 @@ public final class ExtraStorage extends JavaPlugin {
         performanceOptimizer = new PerformanceOptimizer(this);
         storageBackupManager = new StorageBackupManager(this);
 
+        // Kiểm tra và vá lỗi cache filter
+        ItemFilterService.validateAndRepairCache();
+        getLogger().info("Kiểm tra và vá lỗi cache filter hoàn tất");
+
         // Kiểm tra và phục hồi dữ liệu nếu phát hiện server crash
         if (storageBackupManager.recoverFromCrash()) {
             getLogger().info("Kiểm tra tính toàn vẹn dữ liệu hoàn tất");
@@ -196,7 +200,7 @@ public final class ExtraStorage extends JavaPlugin {
             // ⚡ Cleanup các component khác
             StorageSafetyManager.cleanupStaleLocks();
             TransactionLogger.cleanupOldTransactions();
-            ItemFilterService.clearAllCache();
+            ItemFilterService.performCacheCleanup(); // Sử dụng phương thức mới thay vì clearAllCache()
 
             // Cleanup expired pending requests
             cleanupExpiredPendingRequests();
