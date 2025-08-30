@@ -40,6 +40,17 @@ public class ItemFilterService {
             return false;
         }
 
+        // Nếu kho đã tắt trạng thái thì không hút item
+        try {
+            if (!storage.getStatus()) {
+                Debug.log("[ItemFilterService] Storage status is OFF, do not pickup to storage");
+                return false;
+            }
+        } catch (Exception e) {
+            Debug.log("[ItemFilterService] Error checking storage status: " + e.getMessage());
+            return false;
+        }
+
         UUID playerId = player.getUniqueId();
 
         // Ghi log để debug

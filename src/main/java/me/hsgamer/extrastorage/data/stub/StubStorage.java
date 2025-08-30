@@ -4,22 +4,28 @@ import me.hsgamer.extrastorage.Debug;
 import me.hsgamer.extrastorage.ExtraStorage;
 import me.hsgamer.extrastorage.api.item.Item;
 import me.hsgamer.extrastorage.api.storage.Storage;
-import me.hsgamer.extrastorage.configs.MaterialTypeConfig;
+import me.hsgamer.extrastorage.configs.Message;
 import me.hsgamer.extrastorage.data.Constants;
 import me.hsgamer.extrastorage.data.user.ItemImpl;
 import me.hsgamer.extrastorage.hooks.placeholder.ESPlaceholder;
+import me.hsgamer.extrastorage.manager.StorageStatusManager;
 import me.hsgamer.extrastorage.util.Digital;
 import me.hsgamer.extrastorage.util.ItemUtil;
+import me.hsgamer.extrastorage.util.Utils;
+import me.hsgamer.extrastorage.util.ItemFilterService;
 
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 import org.bukkit.permissions.PermissionAttachmentInfo;
 
 import java.util.*;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 
 public class StubStorage implements Storage {
+    private volatile boolean cachedStatus;
+    private volatile long lastStatusCacheTime = 0;
+    private static final long STATUS_CACHE_DURATION = 1000; // 1 giây
+
     private static final ExtraStorage instance = ExtraStorage.getInstance();
     final StubUser user;
 
@@ -29,21 +35,33 @@ public class StubStorage implements Storage {
 
     @Override
     public boolean getStatus() {
-        return user.entry.getValue().status;
+        // Lấy từ bộ nhớ thay vì database
+        return StorageStatusManager.getInstance().getStatus(user.getUUID());
     }
 
     @Override
     public void setStatus(boolean status) {
-        user.entry.setValue(u -> u.withStatus(status));
+        // Lưu vào bộ nhớ thay vì database
+        StorageStatusManager.getInstance().setStatus(user.getUUID(), status);
+
+        Debug.log("[setStatus] Storage status changed to: " + status + " for player: " + user.getName());
+
+        // Clear filter cache khi trạng thái thay đổi
+        ItemFilterService.clearCache(user.getUUID());
+
+        // Gửi thông báo cho người chơi
+        Player player = user.getPlayer();
+        if (player != null && player.isOnline()) {
+            player.sendMessage(Message.getMessage("SUCCESS.storage-usage-toggled")
+                    .replaceAll(Utils.getRegex("status"),
+                            Message.getMessage("STATUS." + (status ? "enabled" : "disabled"))));
+        }
     }
 
     // Cache cho giá trị space để không phải tính toán lại liên tục
-    private long totalUsedSpace = 0; // Duy trì biến này
-    private final Map<String, String> normalizedKeyCache = new ConcurrentHashMap<>();
     private volatile long cachedSpace = -2; // -2 là giá trị không hợp lệ, cho biết cache chưa được tính
     private volatile long lastCacheTime = 0;
     private static final long CACHE_DURATION = 15000; // Giảm thời gian cache xuống 15 giây để cập nhật nhanh hơn
-    private volatile boolean isDirty = false; // Đánh dấu khi có thay đổi
 
     @Override
     public long getSpace() {
@@ -202,31 +220,24 @@ public class StubStorage implements Storage {
 
     @Override
     public boolean canStore(Object key) {
-        // 1. Luôn trả về false nếu kho đang tắt
-        if (!user.entry.getValue().status) {
+        // 1. Kiểm tra trạng thái từ bộ nhớ
+        if (!StorageStatusManager.getInstance().getStatus(user.getUUID())) {
+            Debug.log("[canStore] Storage is disabled for player: " + user.getName());
             return false;
         }
 
-        // 2. Chuyển đổi item thành một "key" định danh hợp lệ
+        // 2. Chuyển đổi item thành key định danh
         String validKey = ItemUtil.toMaterialKey(key);
         if (validKey == null || validKey.equals(Constants.INVALID)) {
-            return false; // Bỏ qua nếu là vật phẩm không hợp lệ
+            return false;
         }
 
-        // 3. Lấy thông tin vật phẩm trực tiếp từ dữ liệu của người dùng
+        // 3. Kiểm tra điều kiện lọc (phần còn lại giữ nguyên)
         ItemImpl item = user.entry.getValue().items.get(validKey);
-
-        // 4. Kiểm tra điều kiện
         if (item != null) {
-            // Vật phẩm được phép vào kho NẾU:
-            // a) Nó đã được bạn thêm vào bộ lọc (filtered = true)
-            // b) Hoặc nó là vật phẩm không lọc nhưng vẫn còn số lượng trong kho (quantity >
-            // 0)
             return item.filtered || item.quantity > 0;
         }
 
-        // 5. Nếu vật phẩm không hề có trong danh sách của bạn, không tự động cho vào
-        // kho
         return false;
     }
 
@@ -547,8 +558,6 @@ public class StubStorage implements Storage {
                 // Ignore if PlaceholderAPI is not loaded
             }
         });
-        totalUsedSpace += quantity; // Update biến
-        resetUsedSpaceCache();
     }
 
     @Override
@@ -643,5 +652,12 @@ public class StubStorage implements Storage {
                 // Ignore if PlaceholderAPI is not loaded
             }
         });
+
+    }
+
+    // Thêm phương thức này trong class StubStorage
+    public void refreshStatusCache() {
+        // Reset cache bằng cách đánh dấu là dirty
+        // Hoặc reset các giá trị cache cụ thể nếu cần
     }
 }

@@ -9,6 +9,7 @@ import me.hsgamer.extrastorage.data.Constants;
 import me.hsgamer.extrastorage.data.log.Log;
 import me.hsgamer.extrastorage.gui.base.ESGui;
 import me.hsgamer.extrastorage.gui.icon.Icon;
+import me.hsgamer.extrastorage.manager.StorageStatusManager;
 import me.hsgamer.extrastorage.util.Digital;
 import me.hsgamer.extrastorage.util.ItemUtil;
 import me.hsgamer.extrastorage.util.Utils;
@@ -40,14 +41,12 @@ public final class StorageGui
         this.setting = instance.getSetting();
 
         this.partner = ((partner == null) ? user : partner);
-        this.storage = this.partner.getStorage();
+        this.storage = this.partner.getStorage(); // ⚠️ Đảm bảo đây là storage mới
 
         this.items = this.sortItem(storage.getItems());
         this.slots = this.getSlots("RepresentItem");
 
         this.handleClick(event -> {
-            // Hủy tất cả sự kiện tương tác mặc định với GUI
-            // Chỉ cho phép các tương tác được xử lý bởi các phương thức riêng
             event.setCancelled(true);
         });
 
@@ -96,11 +95,14 @@ public final class StorageGui
 
     @Override
     public void reopenGui(int page) {
+        // Đảm bảo lấy lại storage mới từ partner
+        this.storage = this.partner.getStorage();
         new StorageGui(player, partner, page, sort, orderSort).open();
     }
 
     @Override
     public void reopenGui(int page, SortType sort, boolean order) {
+        // Đảm bảo tạo instance mới hoàn toàn
         new StorageGui(player, partner, page, sort, order).open();
     }
 
@@ -358,16 +360,20 @@ public final class StorageGui
 
                     this.playSoundIfPresent();
 
-                    boolean status = !storage.getStatus();
-                    storage.setStatus(status);
+                    // Lấy và toggle trạng thái từ bộ nhớ
+                    UUID partnerId = partner.getUUID();
+                    boolean status = !StorageStatusManager.getInstance().getStatus(partnerId);
+                    StorageStatusManager.getInstance().setStatus(partnerId, status);
 
                     player.sendMessage(
                             Message.getMessage("SUCCESS.storage-usage-toggled").replaceAll(Utils.getRegex("status"),
                                     Message.getMessage("STATUS." + (status ? "enabled" : "disabled"))));
 
                     this.reopenGui(page);
-                }).setSlots(slots);
+                })
+                .setSlots(slots);
         this.addIcon(icon);
+
     }
 
     private void addSortByMaterial() {

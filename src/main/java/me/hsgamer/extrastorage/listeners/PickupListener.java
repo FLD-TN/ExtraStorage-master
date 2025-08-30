@@ -236,6 +236,11 @@ public class PickupListener implements Listener {
                 pickupHandler.applyAmount(entity, item, residual);
                 item.setAmount(residual);
                 entity.setItemStack(item);
+                // Kiểm tra trạng thái kho
+                if (!storage.getStatus()) {
+                    Debug.log("[PickupListener] Storage is disabled, not picking up item for " + player.getName());
+                    return;
+                }
                 entity.setMetadata("processed_by_storage", new org.bukkit.metadata.FixedMetadataValue(instance, true));
             } catch (Exception e) {
                 instance.getLogger().warning("Failed to update residual amount: " + e.getMessage());

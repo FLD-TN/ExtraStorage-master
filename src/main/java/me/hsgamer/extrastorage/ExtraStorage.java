@@ -188,6 +188,8 @@ public final class ExtraStorage extends JavaPlugin {
         getServer().getPluginManager().registerEvents(new PickupListener(this), this);
         getServer().getPluginManager().registerEvents(new PlayerDropListener(this), this);
         getServer().getPluginManager().registerEvents(new EntityDeathListener(this), this);
+        getServer().getPluginManager().registerEvents(new StorageStatusListener(), this);
+
     }
 
     private void scheduleCleanupTask() {

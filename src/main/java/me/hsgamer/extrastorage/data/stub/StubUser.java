@@ -53,6 +53,7 @@ public class StubUser implements User {
 
     @Override
     public void save() {
+        // Gọi trực tiếp save mà không qua debounce để đảm bảo dữ liệu được lưu ngay
         ((UserManager) entry.getHolder()).save(entry.getKey());
     }
 

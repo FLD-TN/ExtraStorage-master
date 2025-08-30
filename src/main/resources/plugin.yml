@@ -32,7 +32,6 @@ commands:
     aliases: [ esa ]
     permission: exstorage.command.admin.help
     permission-message: '§cBạn không có quyền sử dụng lệnh này!'
-
 permissions:
   exstorage.*:
     default: op

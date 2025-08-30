@@ -19,11 +19,11 @@ import java.util.concurrent.ConcurrentHashMap;
 
 public class UserImpl {
     public static final UserImpl EMPTY = new UserImpl(
-            Collections.emptyMap(),
-            "",
-            Collections.emptyMap(),
-            0,
-            true);
+            Collections.emptyMap(), // partners
+            "", // texture
+            Collections.emptyMap(), // items
+            0 // space
+    );
 
     // Sử dụng biến static để lưu trữ pending requests
     // Không lưu trong database nữa mà chỉ lưu trong bộ nhớ
@@ -33,21 +33,17 @@ public class UserImpl {
     public final String texture;
     public final Map<String, ItemImpl> items;
     public final long space;
-    public final boolean status;
 
-    private UserImpl(Map<UUID, Long> partners, String texture, Map<String, ItemImpl> items, long space,
-            boolean status) {
+    private UserImpl(Map<UUID, Long> partners, String texture, Map<String, ItemImpl> items, long space) {
         this.partners = partners;
         this.texture = texture;
         this.items = items;
         this.space = space;
-        this.status = status;
     }
 
     public static SqlValueConverter<UserImpl> getConverter(boolean isMySql) {
         return ComplexSqlValueConverter.<UserImpl>builder()
                 .constructor(() -> EMPTY)
-                .entry(new BooleanSqlValueConverter("status"), user -> user.status, UserImpl::withStatus)
                 .entry(new StringSqlValueConverter("texture", "TINYTEXT"), user -> user.texture, UserImpl::withTexture)
                 .entry(new NumberSqlValueConverter<>("space", false, Number::longValue), user -> user.space,
                         UserImpl::withSpace)
@@ -136,8 +132,7 @@ public class UserImpl {
                 Collections.unmodifiableMap(partners),
                 this.texture,
                 this.items,
-                this.space,
-                this.status);
+                this.space);
     }
 
     public UserImpl withPartner(UUID uuid) {
@@ -147,8 +142,7 @@ public class UserImpl {
                 Collections.unmodifiableMap(partners),
                 this.texture,
                 this.items,
-                this.space,
-                this.status);
+                this.space);
     }
 
     public UserImpl withPartnerRemoved(UUID uuid) {
@@ -158,8 +152,7 @@ public class UserImpl {
                 Collections.unmodifiableMap(partners),
                 this.texture,
                 this.items,
-                this.space,
-                this.status);
+                this.space);
     }
 
     public UserImpl withTexture(String texture) {
@@ -167,8 +160,7 @@ public class UserImpl {
                 this.partners,
                 texture,
                 this.items,
-                this.space,
-                this.status);
+                this.space);
     }
 
     public UserImpl withItems(Map<String, ItemImpl> items) {
@@ -176,8 +168,7 @@ public class UserImpl {
                 this.partners,
                 this.texture,
                 Collections.unmodifiableMap(items),
-                this.space,
-                this.status);
+                this.space);
     }
 
     public UserImpl withAdditionalItems(Map<String, ItemImpl> additionalItems) {
@@ -187,8 +178,7 @@ public class UserImpl {
                 this.partners,
                 this.texture,
                 Collections.unmodifiableMap(items),
-                this.space,
-                this.status);
+                this.space);
     }
 
     public UserImpl withItemIfNotFound(String key, ItemImpl item) {
@@ -198,8 +188,7 @@ public class UserImpl {
                 this.partners,
                 this.texture,
                 Collections.unmodifiableMap(items),
-                this.space,
-                this.status);
+                this.space);
     }
 
     public UserImpl withItemRemoved(String key) {
@@ -209,8 +198,7 @@ public class UserImpl {
                 this.partners,
                 this.texture,
                 Collections.unmodifiableMap(items),
-                this.space,
-                this.status);
+                this.space);
     }
 
     public UserImpl withItemModifiedIfFound(String key, Function<ItemImpl, ItemImpl> function) {
@@ -239,16 +227,7 @@ public class UserImpl {
                 this.partners,
                 this.texture,
                 this.items,
-                space,
-                this.status);
+                space);
     }
 
-    public UserImpl withStatus(boolean status) {
-        return new UserImpl(
-                this.partners,
-                this.texture,
-                this.items,
-                this.space,
-                this.status);
-    }
 }

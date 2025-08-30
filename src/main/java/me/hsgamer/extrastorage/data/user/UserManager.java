@@ -175,10 +175,23 @@ public final class UserManager extends SimpleDataHolder<UUID, UserImpl> {
         userCache.remove(uuid);
 
         // Remove from entry map if needed
-        getEntryMap().remove(uuid);
+        try {
+            getEntryMap().remove(uuid);
+        } catch (UnsupportedOperationException e) {
+            instance.getLogger().fine("Entry map is unmodifiable, skipping remove for " + uuid);
+        }
 
         // Remove từ cả saveMap để đảm bảo không bị mất dữ liệu
-        saveMapRef.get().remove(uuid);
+        Map<UUID, UserImpl> currentSaveMap = saveMapRef.get();
+        try {
+            currentSaveMap.remove(uuid);
+        } catch (UnsupportedOperationException e) {
+            // Nếu map không thể thay đổi (ví dụ unmodifiable), tạo bản sao có thể thay đổi
+            // rồi cập nhật
+            ConcurrentHashMap<UUID, UserImpl> copy = new ConcurrentHashMap<>(currentSaveMap);
+            copy.remove(uuid);
+            saveMapRef.set(copy);
+        }
 
         // Remove khỏi lastSaveTime
         lastSaveTime.remove(uuid);
